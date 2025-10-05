@@ -1,0 +1,431 @@
+{% extends 'store/base.html' %}
+
+{% block extracss %}
+  <style>
+    .quantity-input {
+      -moz-appearance: textfield;
+    }
+    
+    .quantity-input::-webkit-outer-spin-button,
+    .quantity-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    
+    .size-option {
+      transition: all 0.2s ease;
+    }
+    
+    .quantity-btn {
+      transition: background-color 0.2s ease;
+    }
+    
+    .quantity-btn:hover {
+      background-color: #f3f4f6;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <!-- Product Section -->
+  <section class="max-w-6xl mx-auto px-6 py-12 grid md:grid-cols-2 gap-10">
+    <!-- Product Images -->
+    <div class="bg-white rounded-2xl shadow-md p-4">
+      <!-- Main Image -->
+      <img id="mainImage" src="{{ primary_image.image.url }}" loading="lazy" alt="{{ product.name }}" class="w-full h-[400px] object-contain rounded-xl mb-4 transition-all duration-300 bg-gray-100" />
+
+      <!-- Thumbnails -->
+      <div class="flex gap-3">
+        {% for image in product.images.all %}
+          <img class="w-20 h-20 object-cover rounded-lg cursor-pointer border-2 border-gray-300 hover:border-blue-500" src="{{ image.image.url }}" loading="lazy" alt="{{ product.name }}" onclick="changeMainImage(this)" />
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Product Info -->
+    <div>
+      <h2 class="text-3xl font-bold mb-4">{{ product.name }}</h2>
+      <p class="text-gray-600 mb-4">{{ product.short_description }}</p>
+
+      <div class="flex items-center gap-4 mb-4">
+        {% if product.discount_price %}
+          <span class="text-2xl font-bold text-green-600">৳ {{ product.discount_price }}</span>
+          <span class="text-gray-500 line-through">৳ {{ product.price }}</span>
+          <span class="bg-red-500 text-white px-2 py-1 rounded-lg text-sm">-{{ product.get_discount_percentage }}%</span>
+        {% else %}
+          <span class="text-2xl font-bold text-green-600">৳ {{ product.price }}</span>
+        {% endif %}
+      </div>
+
+      <div class="flex items-center mb-4">
+        {% if review_count > 0 %}
+          <span class="text-yellow-400 text-xl">
+            {% for i in '12345' %}
+              {% if forloop.counter <= average_rating %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+          <span class="ml-2 text-gray-600">({{ review_count }} Reviews)</span>
+        {% else %}
+          <span class="text-yellow-400 text-xl">☆☆☆☆☆</span>
+          <span class="ml-2 text-gray-600">(No reviews yet)</span>
+        {% endif %}
+      </div>
+
+      <!-- Size Options -->
+      <div class="mb-6">
+        <p class="font-semibold mb-2">Select Size:</p>
+        <div class="flex flex-wrap gap-3" id="sizeOptions">
+          {% for size in product.sizes.all %}
+            <button type="button" class="px-4 py-2 border rounded-lg hover:bg-blue-600 hover:text-white transition-colors size-option" data-size="{{ size.size }}">{{ size.size }}</button>
+          {% empty %}
+            <p class="text-gray-500">No sizes available</p>
+          {% endfor %}
+        </div>
+        <input type="hidden" id="selectedSize" name="size" value="" />
+      </div>
+
+      <!-- Quantity Selector -->
+      <div class="mb-6">
+        <p class="font-semibold mb-2">Quantity:</p>
+        <div class="flex items-center border rounded-md w-32">
+          <button type="button" class="quantity-btn px-3 py-2 text-gray-600 decrease-quantity"><i class="fas fa-minus text-xs"></i></button>
+          <input type="number" id="quantity" name="quantity" value="1" min="1" class="w-12 text-center border-t border-b py-2 quantity-input" />
+          <button type="button" class="quantity-btn px-3 py-2 text-gray-600 increase-quantity"><i class="fas fa-plus text-xs"></i></button>
+        </div>
+      </div>
+
+      <div class="flex gap-4">
+        <!-- Add to Cart Form -->
+        <form method="POST" action="{% url 'add_to_cart' product.id %}" class="flex-1" id="addToCartForm">
+          {% csrf_token %}
+          <input type="hidden" name="size" id="formSize" value="" />
+          <input type="hidden" name="quantity" id="formQuantity" value="1" />
+          <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition">🛒 Add to Cart</button>
+        </form>
+
+        <!-- Buy Now Button (not a form) -->
+        <button type="button" onclick="buyNow()" class="flex-1 w-full bg-green-600 text-white py-3 rounded-xl hover:bg-green-700 transition">⚡ Buy Now</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product Description -->
+  <section class="max-w-6xl mx-auto px-6 py-12">
+    <h3 class="text-2xl font-bold mb-4">Product Description</h3>
+    <div class="text-gray-700 leading-relaxed">{{ product.description|safe }}</div>
+  </section>
+
+  <!-- Customer Review Section -->
+  <section class="max-w-6xl mx-auto px-6 py-12">
+    <h3 class="text-2xl font-bold mb-6">Customer Reviews</h3>
+
+    <!-- Review List -->
+    <div id="reviewList" class="space-y-4 mb-8">
+      {% for review in approved_reviews %}
+        <div class="bg-white p-4 rounded-lg shadow-sm">
+          <div class="flex items-center mb-2">
+            <span class="font-semibold">{{ review.customer_name }}</span>
+            <span class="text-yellow-400 ml-2">
+              {% for i in '12345' %}
+                {% if forloop.counter <= review.rating %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+            <span class="text-gray-500 text-sm ml-2">{{ review.created_at|date:'M d, Y' }}</span>
+          </div>
+          {% if review.title %}
+            <h4 class="font-medium text-lg mb-1">{{ review.title }}</h4>
+          {% endif %}
+          <p class="text-gray-700">{{ review.comment }}</p>
+        </div>
+      {% empty %}
+        <p class="text-gray-500">No reviews yet. Be the first to review this product!</p>
+      {% endfor %}
+    </div>
+
+    <!-- Add Review Form -->
+    <div class="bg-gray-100 p-6 rounded-xl shadow-md">
+      <h3 class="text-lg font-semibold mb-4">Write a Review</h3>
+      <div>
+        <input type="text" id="username" placeholder="Your Name" class="w-full border rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <input type="text" id="reviewTitle" placeholder="Review Title" class="w-full border rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        <textarea id="reviewText" rows="3" placeholder="Your Review" class="w-full border rounded-lg p-2 mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+        <!-- Star Rating -->
+        <div class="flex items-center gap-2 mb-4">
+          <span class="font-semibold">Your Rating:</span>
+          <div class="flex gap-1 text-2xl cursor-pointer text-gray-400">
+            {% for i in '12345' %}
+              <span class="rating-star" data-value="{{ forloop.counter }}">★</span>
+            {% endfor %}
+          </div>
+          <input type="hidden" id="ratingValue" value="5" />
+        </div>
+
+        <button onclick="addReview()" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition">Submit Review</button>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block extrajs %}
+  <script>
+    // Product detail page functionality
+    document.addEventListener('DOMContentLoaded', function () {
+      // Size selection
+      const sizeOptions = document.querySelectorAll('.size-option')
+      const selectedSizeInput = document.getElementById('selectedSize')
+      const formSizeInput = document.getElementById('formSize')
+    
+      sizeOptions.forEach((button) => {
+        button.addEventListener('click', function () {
+          if (this.disabled) return
+    
+          sizeOptions.forEach((btn) => {
+            btn.classList.remove('bg-blue-600', 'text-white')
+            btn.classList.add('border', 'border-gray-300')
+          })
+          this.classList.add('bg-blue-600', 'text-white')
+          this.classList.remove('border')
+    
+          const selectedSize = this.getAttribute('data-size')
+          selectedSizeInput.value = selectedSize
+          formSizeInput.value = selectedSize
+        })
+      })
+    
+      // Quantity management
+      const quantityInput = document.getElementById('quantity')
+      const formQuantityInput = document.getElementById('formQuantity')
+    
+      document.querySelector('.increase-quantity').addEventListener('click', function () {
+        quantityInput.value = parseInt(quantityInput.value) + 1
+        formQuantityInput.value = quantityInput.value
+      })
+    
+      document.querySelector('.decrease-quantity').addEventListener('click', function () {
+        if (parseInt(quantityInput.value) > 1) {
+          quantityInput.value = parseInt(quantityInput.value) - 1
+          formQuantityInput.value = quantityInput.value
+        }
+      })
+    
+      quantityInput.addEventListener('change', function () {
+        if (parseInt(this.value) < 1) this.value = 1
+        formQuantityInput.value = this.value
+      })
+    
+      // Add to cart form submission
+      const addToCartForm = document.getElementById('addToCartForm')
+      addToCartForm.addEventListener('submit', function (e) {
+        e.preventDefault()
+    
+        // Check if size is required and selected
+        const sizeOptions = document.querySelectorAll('.size-option')
+        if (sizeOptions.length > 0 && !formSizeInput.value) {
+          alert('Please select a size')
+          return
+        }
+    
+        const formData = new FormData(this)
+    
+        fetch(this.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Update cart count in navbar
+              document.querySelectorAll('.cart-count').forEach((el) => {
+                el.textContent = data.cart_count
+              })
+    
+              // Show success message
+              showNotification('Product added to cart successfully!', 'success')
+    
+              // Optional: Animation effect
+              const addButton = this.querySelector('button')
+              addButton.innerHTML = '✓ Added to Cart'
+              addButton.classList.add('bg-green-600')
+              addButton.classList.remove('bg-blue-600')
+    
+              setTimeout(() => {
+                addButton.innerHTML = '🛒 Add to Cart'
+                addButton.classList.remove('bg-green-600')
+                addButton.classList.add('bg-blue-600')
+              }, 2000)
+            } else {
+              showNotification('Error adding product to cart', 'error')
+            }
+          })
+          .catch((error) => {
+            console.error('Error:', error)
+            showNotification('Error adding product to cart', 'error')
+          })
+      })
+    
+      // Star rating for reviews
+      const stars = document.querySelectorAll('.rating-star')
+      const ratingValue = document.getElementById('ratingValue')
+    
+      // Initialize stars to show default rating
+      stars.forEach((star) => {
+        const value = parseInt(star.getAttribute('data-value'))
+        if (value <= 5) {
+          star.classList.add('text-yellow-400')
+          star.classList.remove('text-gray-400')
+        }
+      })
+    
+      stars.forEach((star) => {
+        star.addEventListener('click', function () {
+          const value = parseInt(this.getAttribute('data-value'))
+          ratingValue.value = value
+    
+          stars.forEach((s) => {
+            const sValue = parseInt(s.getAttribute('data-value'))
+            if (sValue <= value) {
+              s.classList.add('text-yellow-400')
+              s.classList.remove('text-gray-400')
+            } else {
+              s.classList.remove('text-yellow-400')
+              s.classList.add('text-gray-400')
+            }
+          })
+        })
+      })
+    })
+    
+    // Function to change main image when clicking on thumbnails
+    function changeMainImage(element) {
+      document.getElementById('mainImage').src = element.src
+    }
+    
+    // Function to show notification
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div')
+      notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white font-semibold transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'}`
+      notification.textContent = message
+    
+      // Add to page
+      document.body.appendChild(notification)
+    
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.style.opacity = '0'
+        setTimeout(() => {
+          document.body.removeChild(notification)
+        }, 300)
+      }, 3000)
+    }
+    
+    // Function to handle Buy Now
+    function buyNow() {
+      const selectedSize = document.getElementById('selectedSize').value
+      const quantity = document.getElementById('quantity').value
+      const sizeOptions = document.querySelectorAll('.size-option')
+    
+      // Check if size is required and selected
+      if (sizeOptions.length > 0 && !selectedSize) {
+        alert('Please select a size')
+        return
+      }
+    
+      // Create a form and submit it
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = "{% url 'buy_now' product.id %}"
+    
+      // Add CSRF token
+      const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value
+      const csrfInput = document.createElement('input')
+      csrfInput.type = 'hidden'
+      csrfInput.name = 'csrfmiddlewaretoken'
+      csrfInput.value = csrfToken
+      form.appendChild(csrfInput)
+    
+      // Add size input
+      const sizeInput = document.createElement('input')
+      sizeInput.type = 'hidden'
+      sizeInput.name = 'size'
+      sizeInput.value = selectedSize
+      form.appendChild(sizeInput)
+    
+      // Add quantity input
+      const quantityInput = document.createElement('input')
+      quantityInput.type = 'hidden'
+      quantityInput.name = 'quantity'
+      quantityInput.value = quantity
+      form.appendChild(quantityInput)
+    
+      // Submit the form
+      document.body.appendChild(form)
+      form.submit()
+    }
+    
+    // Function to handle review submission (client-side only for now)
+    function addReview() {
+      const username = document.getElementById('username').value
+      const reviewTitle = document.getElementById('reviewTitle').value
+      const reviewText = document.getElementById('reviewText').value
+      const rating = document.getElementById('ratingValue').value
+    
+      if (!username || !reviewText) {
+        showNotification('Please fill in all required fields', 'error')
+        return
+      }
+    
+      // Create a new review element
+      const reviewList = document.getElementById('reviewList')
+      const newReview = document.createElement('div')
+      newReview.className = 'bg-white p-4 rounded-lg shadow-sm'
+      newReview.innerHTML = `
+            <div class="flex items-center mb-2">
+                <span class="font-semibold">${username}</span>
+                <span class="text-yellow-400 ml-2">
+                    ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}
+                </span>
+                <span class="text-gray-500 text-sm ml-2">Just now</span>
+            </div>
+            ${reviewTitle ? `<h4 class="font-medium text-lg mb-1">${reviewTitle}</h4>` : ''}
+            <p class="text-gray-700">${reviewText}</p>
+        `
+    
+      // Add the new review to the top of the list
+      if (reviewList.firstChild) {
+        reviewList.insertBefore(newReview, reviewList.firstChild)
+      } else {
+        reviewList.appendChild(newReview)
+      }
+    
+      // Clear the form
+      document.getElementById('username').value = ''
+      document.getElementById('reviewTitle').value = ''
+      document.getElementById('reviewText').value = ''
+      document.getElementById('ratingValue').value = '5'
+    
+      // Reset stars to default rating
+      document.querySelectorAll('.rating-star').forEach((star) => {
+        const value = parseInt(star.getAttribute('data-value'))
+        if (value <= 5) {
+          star.classList.add('text-yellow-400')
+          star.classList.remove('text-gray-400')
+        }
+      })
+    
+      showNotification('Thank you for your review!', 'success')
+    }
+  </script>
+{% endblock %}

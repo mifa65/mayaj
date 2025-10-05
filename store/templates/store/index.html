@@ -1,0 +1,812 @@
+{% extends 'store/base.html' %}
+
+{% block extracss %}
+  <style>
+    /* 3D Rotating Showcase */
+    .showcase-container {
+      perspective: 1500px;
+    }
+    
+    .shoe-showcase {
+      transform-style: preserve-3d;
+      animation: rotate 30s infinite linear;
+    }
+    
+    .shoe-showcase:hover {
+      animation-play-state: paused;
+    }
+    
+    .shoe-item {
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      backface-visibility: hidden;
+    }
+    
+    .shoe-item:nth-child(1) {
+      transform: rotateY(0deg) translateZ(300px);
+    }
+    
+    .shoe-item:nth-child(2) {
+      transform: rotateY(60deg) translateZ(300px);
+    }
+    
+    .shoe-item:nth-child(3) {
+      transform: rotateY(120deg) translateZ(300px);
+    }
+    
+    .shoe-item:nth-child(4) {
+      transform: rotateY(180deg) translateZ(300px);
+    }
+    
+    .shoe-item:nth-child(5) {
+      transform: rotateY(240deg) translateZ(300px);
+    }
+    
+    .shoe-item:nth-child(6) {
+      transform: rotateY(300deg) translateZ(300px);
+    }
+    
+    /* all product section css designs */
+    .product-card {
+      transition: all 0.3s ease;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .product-image {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .product-image img {
+      transition: transform 0.5s ease;
+    }
+    
+    .product-card:hover .product-image img {
+      transform: scale(1.05);
+    }
+    
+    .product-card:hover .quick-view {
+      bottom: 0;
+    }
+    
+    .size-option {
+      transition: all 0.2s ease;
+    }
+    
+    .size-option:hover {
+      background-color: #4f46e5;
+      color: white;
+      border-color: #4f46e5;
+    }
+    
+    .size-option.selected {
+      background-color: #4f46e5;
+      color: white;
+      border-color: #4f46e5;
+    }
+    
+    .add-to-cart {
+      transition: all 0.3s ease;
+    }
+    
+    .add-to-cart:hover {
+      transform: scale(1.05);
+    }
+    
+    .rating-stars {
+      display: inline-flex;
+    }
+    
+    .combo-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 1px solid #e5e7eb;
+      height: fit-content;
+    }
+    
+    .combo-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .combo-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: linear-gradient(45deg, #3b82f6, #10b981);
+      color: white;
+      font-weight: 600;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 16px;
+      z-index: 10;
+    }
+    
+    .savings-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: linear-gradient(45deg, #ef4444, #f59e0b);
+      color: white;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 3px 8px;
+      border-radius: 16px;
+      z-index: 10;
+    }
+    
+    .product-indicator {
+      position: absolute;
+      bottom: 12px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      z-index: 10;
+    }
+    
+    .indicator-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+    }
+    
+    .indicator-dot.active {
+      background-color: white;
+      transform: scale(1.2);
+    }
+    
+    .countdown-timer {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    
+    .timer-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #f3f4f6;
+      padding: 6px;
+      border-radius: 6px;
+      min-width: 40px;
+    }
+    
+    .timer-value {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #1f2937;
+    }
+    
+    .timer-label {
+      font-size: 0.65rem;
+      color: #6b7280;
+    }
+    
+    .plus-icon {
+      margin: 0 8px;
+      background-color: #e5e7eb;
+      color: #4b5563;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    
+    .combo-price {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+    
+    .original-price {
+      text-decoration: line-through;
+      color: #9ca3af;
+      font-size: 0.9rem;
+    }
+    
+    .combo-image-container {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .combo-image {
+      transition: transform 0.5s ease;
+    }
+    
+    .combo-image:hover {
+      transform: scale(1.05);
+    }
+    
+    .view-all-btn {
+      transition: all 0.3s ease;
+      background: linear-gradient(45deg, #3b82f6, #10b981);
+      color: white;
+      font-weight: 600;
+    }
+    
+    .view-all-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px -5px rgba(59, 130, 246, 0.4);
+    }
+    
+    @media (max-width: 768px) {
+      .combo-image-container {
+        height: 45vw;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .combo-image-container {
+        height: 50vw;
+      }
+    
+      .combo-badge,
+      .savings-badge {
+        font-size: 0.6rem;
+        padding: 2px 6px;
+      }
+    
+      .plus-icon {
+        margin: 0 6px;
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+      }
+    }
+    
+    .pattern-dots {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: 0.3;
+      pointer-events: none;
+    }
+    
+    .offer-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .offer-icon {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      font-size: 24px;
+      opacity: 0.8;
+    }
+    
+    .offer-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+    
+    .offer-link:hover {
+      border-bottom-color: currentColor;
+    }
+    
+    .offer-card {
+      transition: all 0.3s ease;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      height: 100%;
+    }
+    
+    .offer-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .offer-badge {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      color: white;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      z-index: 10;
+    }
+    
+    .offer-icon {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      font-size: 2.5rem;
+      opacity: 0.15;
+      transition: all 0.3s ease;
+    }
+    
+    .offer-card:hover .offer-icon {
+      transform: scale(1.1);
+      opacity: 0.2;
+    }
+    
+    .pattern-dots {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+      background-size: 10px 10px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0.3;
+    }
+    
+    .countdown-timer {
+      display: flex;
+      gap: 6px;
+    }
+    
+    .timer-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 6px;
+      border-radius: 8px;
+      min-width: 40px;
+    }
+    
+    .timer-value {
+      font-weight: 700;
+      font-size: 1rem;
+      color: white;
+    }
+    
+    .timer-label {
+      font-size: 0.65rem;
+      color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .offer-link {
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+    }
+    
+    .offer-link:hover {
+      transform: translateX(5px);
+    }
+    
+    @media (max-width: 768px) {
+      .offer-card {
+        margin-bottom: 1.5rem;
+      }
+    
+      .offer-icon {
+        font-size: 2rem;
+      }
+    }
+    
+    /* Animations */
+    /* rotate for the hero section circle animation */
+    @keyframes rotate {
+      0% {
+        transform: rotateY(0);
+      }
+    
+      100% {
+        transform: rotateY(360deg);
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <!-- mayaj hero section -->
+  <section id="showcase" class="py-20 min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
+    <div class="container mx-auto flex lg:flex-row md:flex-col-reverse flex-col-reverse justify-around px-4">
+      <div class="md:w-96 w-full flex justify-center">
+        <div class="text-center">
+          <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">{{ herosection.title }}</h2>
+          <p class="text-lg md:text-xl mb-10 max-w-2xl mx-auto">{{ herosection.subtitle }}</p>
+          <div class="md:flex hidden flex-col sm:flex-row justify-center gap-4">
+            {% if herosection.primary_button_link %}
+              <a href="{{ herosection.primary_button_link }}" class="bg-indigo-600 hover:bg-indigo-700 text-white text-center px-8 py-3 rounded-lg font-semibold transition duration-300">{{ herosection.primary_button_text }}</a>
+            {% endif %}
+
+            {% if herosection.secondary_button_link %}
+              <a href="{{ herosection.secondary_button_link }}" class="bg-white hover:bg-gray-100 text-indigo-600 text-center px-8 py-3 rounded-lg font-semibold transition duration-300">{{ herosection.secondary_button_text }}</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <!-- mayaj hero section 3d image -->
+      <div class="showcase-container flex justify-center items-center md:w-72 w-40 h-96 md:mr-20 mr-2">
+        <div class="shoe-showcase relative w-52 h-64">
+          {% if rotating_images %}
+            {% for rotating_item in rotating_images %}
+              <a href="{% url 'product-desc' rotating_item.product.slug %}" class="shoe-item">
+                {% with first_image=rotating_item.product.images.all|first %}
+                  {% if first_image %}
+                    <img src="{{ first_image.image.url }}" loading="lazy"
+                      alt="{% if first_image.alt_text %}
+                        {{ first_image.alt_text }}
+                      {% else %}
+                        {{ rotating_item.product.name }}
+                      {% endif %}"
+                      class="w-full h-full object-contain" />
+                  {% else %}
+                    <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span class="text-gray-500 text-sm">No image</span>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+              </a>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Products Section -->
+  <section class="py-16 bg-gradient-to-b from-white to-gray-50" id="products">
+    <div class="container mx-auto px-4 max-w-7xl">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4">Featured Collection</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto md:block hidden">Discover our premium selection of footwear designed for comfort, style, and performance.</p>
+      </div>
+
+      <!-- Product Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {% if featured_products %}
+          {% for product in featured_products %}
+            <!-- Product Card -->
+            <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden">
+              <a href="{% url 'product-desc' product.slug %}" class="block">
+                <div class="product-image relative">
+                  {% with first_image=product.images.all|first %}
+                    {% if first_image %}
+                      <img src="{{ first_image.image.url }}" loading="lazy"
+                        alt="{% if first_image.alt_text %}
+                          {{ first_image.alt_text }}
+                        {% else %}
+                          {{ product.name }}
+                        {% endif %}"
+                        class="w-full h-60 object-cover" />
+                    {% else %}
+                      <div class="w-full h-60 bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-500">No image</span>
+                      </div>
+                    {% endif %}
+                  {% endwith %}
+
+                  {% if product.discount_price %}
+                    <span class="absolute top-4 right-4 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-semibold">{{ product.get_discount_percentage }}% OFF</span>
+                  {% endif %}
+                </div>
+              </a>
+              <div class="p-5">
+                <a href="{% url 'product-desc' product.slug %}">
+                  <div class="h-20">
+                    <h3 class="font-semibold text-lg text-gray-900 truncate">{{ product.name }}</h3>
+                    <p class="text-gray-600 text-sm mb-2 truncate">{{ product.short_description }}</p>
+                  </div>
+                </a>
+
+                <!-- Sizes Section -->
+                <div class="mb-4">
+                  <p class="text-gray-600 text-sm mb-2">Available Sizes:</p>
+                  <div class="flex flex-wrap gap-2" id="size-container-{{ product.id }}">
+                    {% for size in product.sizes.all|slice:':4' %}
+                      <span class="size-option text-xs border border-gray-200 rounded-md px-2 py-1 cursor-pointer {% if forloop.first %}selected border-primary{% endif %}" data-product-id="{{ product.id }}" data-size="{{ size.size }}">{{ size.size }}</span>
+                    {% empty %}
+                      <span class="text-gray-400 text-xs">No sizes available</span>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                <!-- Price and Add to Cart -->
+                <div class="flex justify-between items-center">
+                  <div>
+                    {% if product.discount_price %}
+                      <span class="text-primary font-bold text-lg">৳ {{ product.discount_price }}</span>
+                      <span class="text-gray-400 text-sm line-through ml-2">৳ {{ product.price }}</span>
+                    {% else %}
+                      <span class="text-primary font-bold text-lg">৳ {{ product.price }}</span>
+                    {% endif %}
+                  </div>
+                  <div class="">
+                    <form method="POST" action="{% url 'add_to_cart' product.id %}" class="flex-1" id="addToCartForm-{{ product.id }}">
+                      {% csrf_token %}
+                      <input type="hidden" name="size" id="formSize-{{ product.id }}" value="{% firstof product.sizes.all.0.size '' %}" />
+                      <input type="hidden" name="quantity" id="formQuantity-{{ product.id }}" value="1" />
+                      <button type="submit" class="add-to-cart bg-primary text-white p-3 rounded-full hover:bg-primary-dark transition duration-300"><i class="fas fa-shopping-cart"></i></button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-span-4 text-center py-12">
+            <p class="text-gray-500">No featured products available at the moment.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="text-center mt-16">
+        <a href="{% url 'products' %}" class="inline-block bg-primary text-white px-8 py-3 rounded-full font-semibold hover:bg-primary-dark transition duration-300 shadow-md hover:shadow-lg">View All Products</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Combo Offer Section -->
+  <section class="py-12 bg-gradient-to-b from-gray-50 to-white" id="combo-offers">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="text-center mb-12">
+        <span class="text-secondary font-semibold uppercase tracking-wider text-sm">Limited Time Offers</span>
+        <h2 class="text-3xl font-bold text-gray-900 mb-3 mt-2">Special Combo Deals</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto text-sm">Maximize your savings with our expertly curated bundles. Limited quantities available with exclusive discounts.</p>
+      </div>
+
+      <!-- Combo Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+        {% if combo_offers %}
+          {% for combo in combo_offers %}
+            <!-- Combo Card -->
+            <div class="combo-card bg-white rounded-xl shadow-md overflow-hidden">
+              <div class="combo-image-container h-60 relative">
+                <div class="combo-badge">{{ combo.badge_text }}</div>
+                <div class="savings-badge">{{ combo.savings_badge_text }}</div>
+                <div class="flex h-full">
+                  {% for combo_product in combo.comboproduct_set.all|slice:':2' %}
+                    <div class="w-1/2 h-full overflow-hidden">
+                      {% with first_image=combo_product.product.images.all|first %}
+                        {% if first_image %}
+                          <img src="{{ first_image.image.url }}" loading="lazy"
+                            alt="{% if first_image.alt_text %}
+                              {{ first_image.alt_text }}
+                            {% else %}
+                              {{ combo_product.product.name }}
+                            {% endif %}"
+                            class="combo-image w-full h-full object-cover" />
+                        {% else %}
+                          <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <span class="text-gray-500 text-xs">No image</span>
+                          </div>
+                        {% endif %}
+                      {% endwith %}
+                    </div>
+                  {% endfor %}
+                </div>
+                <div class="product-indicator">
+                  {% for i in combo.comboproduct_set.all %}
+                    <span class="indicator-dot {% if forloop.first %}active{% endif %}"></span>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="p-5">
+                <div class="flex justify-between items-start mb-2">
+                  <h3 class="font-bold text-lg text-gray-900">{{ combo.name }}</h3>
+                </div>
+
+                <div class="flex items-center mb-3 flex-wrap gap-2 h-16">
+                  {% for combo_product in combo.comboproduct_set.all|slice:':2' %}
+                    <span class="text-sm font-semibold bg-blue-50 px-2 py-1 rounded-md">{{ combo_product.product.name }}</span>
+                    {% if not forloop.last %}
+                      <span class="plus-icon">+</span>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+
+                <div class="flex items-center mb-3">
+                  <span class="combo-price text-primary">৳{{ combo.discount_price }}</span>
+                  <span class="original-price ml-2">৳{{ combo.original_price }}</span>
+                </div>
+
+                <div class="mb-4">
+                  <div class="flex text-xs text-gray-500 mb-1">
+                    <span>Limited stock: {{ combo.stock_quantity }} left</span>
+                  </div>
+                </div>
+
+                <div class="mb-4">
+                  <p class="text-gray-500 text-xs mb-2">Offer ends:</p>
+                  <div class="text-sm text-gray-700">{{ combo.end_date|date:'M d, Y H:i' }}</div>
+                </div>
+
+                <button class="w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:bg-primary-dark transition duration-300 flex items-center justify-center text-sm shadow-sm hover:shadow-md"><i class="fas fa-shopping-cart mr-2 text-xs"></i> Add to Cart</button>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <!-- Fallback if no combo offers -->
+          <div class="col-span-2 text-center py-8">
+            <p class="text-gray-500">No combo offers available at the moment.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if combo_offers %}
+        <div class="text-center mt-12">
+          <a href="{% url 'offers' %}#combo-offers" class="view-all-btn inline-block px-6 py-2.5 rounded-full font-semibold transition duration-300 text-sm shadow-sm hover:shadow-md">
+            View All Combo Offers
+            <i class="fas fa-arrow-right ml-2 text-xs"></i>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Special Offers Section -->
+  <section class="py-16 bg-white" id="offers">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <span class="text-primary font-semibold uppercase tracking-wider text-sm">Limited Time Deals</span>
+        <h2 class="text-4xl font-bold text-gray-900 mb-4 mt-2">Exclusive Special Offers</h2>
+        <p class="text-gray-600">Don't miss out on these limited-time deals and exclusive promotions crafted just for you</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% if active_offers %}
+          {% for offer in active_offers %}
+            <!-- Dynamic Offer Card -->
+            <div class="offer-card bg-gradient-to-br {{ offer.gradient_classes }} text-white p-12 relative overflow-hidden">
+              <div class="pattern-dots"></div>
+              <div class="offer-badge">{{ offer.badge_text }}</div>
+              <div class="offer-icon">
+                <i class="{{ offer.icon_class }}"></i>
+              </div>
+
+              <h3 class="text-2xl font-bold mb-3 relative z-10">{{ offer.title }}</h3>
+              <p class="mb-6 relative z-10">{{ offer.short_description }}</p>
+
+              {% if offer.offer_type == 'welcome_offer' and offer.discount_code %}
+                <div class="flex items-center text-sm mb-6 relative z-10">
+                  <div class="bg-white/20 px-3 py-1.5 rounded-lg flex items-center">
+                    <span class="mr-2">Use code:</span>
+                    <span class="font-mono font-bold">{{ offer.discount_code }}</span>
+                    <button class="ml-2 text-xs bg-white/30 p-1 rounded copy-code" data-code="{{ offer.discount_code }}" aria-label="Copy code"><i class="fas fa-copy"></i></button>
+                  </div>
+                </div>
+              {% elif offer.offer_type == 'free_shipping' and offer.min_order_amount %}
+                <div class="flex items-center text-sm mb-8 relative z-10">
+                  <div class="flex items-center bg-white/20 px-3 py-1.5 rounded-lg">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Minimum order: ৳{{ offer.min_order_amount }}</span>
+                  </div>
+                </div>
+              {% else %}
+                <div class="flex items-center text-sm mb-6 relative z-10">
+                  <i class="fas fa-clock mr-2 opacity-80"></i>
+                  <span>Ends: {{ offer.end_date|date:'M d, Y' }}</span>
+                </div>
+              {% endif %}
+
+              <a href="{% url 'products' %}" class="font-semibold offer-link relative z-10 group">
+                {% if offer.offer_type == 'welcome_offer' %}
+                  Claim Offer
+                {% else %}
+                  Shop Now
+                {% endif %}
+                <i class="fas fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+              </a>
+
+              <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-current to-current opacity-50"></div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <!-- Fallback if no offers -->
+          <div class="col-span-3 text-center py-12">
+            <p class="text-gray-500">No special offers available at the moment.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if active_offers %}
+        <div class="text-center mt-12">
+          <p class="text-gray-500 text-sm mb-6">More offers are waiting for you</p>
+          <a href="{% url 'offers' %}#offers" class="inline-flex items-center text-primary font-semibold hover:text-primary-dark transition-colors">
+            View all offers
+            <i class="fas fa-chevron-right ml-2 text-sm"></i>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}
+
+{% block extrajs %}
+  <script>
+    // Simple interactivity for demonstration
+    document.addEventListener('DOMContentLoaded', function () {
+      // Size selection
+        const sizeOptions = document.querySelectorAll('.size-option');
+        sizeOptions.forEach(option => {
+            option.addEventListener('click', function () {
+                const productId = this.getAttribute('data-product-id');
+                const size = this.getAttribute('data-size');
+                
+                // Remove selected class from siblings
+                const container = document.getElementById(`size-container-${productId}`);
+                const siblings = container.querySelectorAll('.size-option');
+                siblings.forEach(sib => {
+                    sib.classList.remove('selected', 'border-primary');
+                });
+                
+                // Add selected class to clicked element
+                this.classList.add('selected', 'border-primary');
+                
+                // Update the hidden form field
+                document.getElementById(`formSize-${productId}`).value = size;
+            });
+        });
+
+    
+      // Wishlist toggle
+      const wishlistButtons = document.querySelectorAll('.fa-heart')
+      wishlistButtons.forEach((button) => {
+        button.addEventListener('click', function () {
+          this.classList.toggle('far')
+          this.classList.toggle('fas')
+          this.classList.toggle('text-red-500')
+        })
+      })
+    
+      // Simple countdown timer animation
+      const countdowns = document.querySelectorAll('.countdown-timer')
+    
+      countdowns.forEach((timer) => {
+        const seconds = timer.querySelector('.timer-unit:last-child .timer-value')
+        let count = parseInt(seconds.textContent)
+    
+        setInterval(() => {
+          count--
+          if (count < 0) {
+            count = 59
+            // Update minutes here in a real implementation
+          }
+          seconds.textContent = count.toString().padStart(2, '0')
+        }, 1000)
+      })
+    
+      // Copy code functionality
+      document.querySelectorAll('.copy-code').forEach((button) => {
+        button.addEventListener('click', function () {
+          const code = this.getAttribute('data-code')
+          navigator.clipboard.writeText(code).then(() => {
+            const originalIcon = this.innerHTML
+            this.innerHTML = '<i class="fas fa-check"></i>'
+            setTimeout(() => {
+              this.innerHTML = originalIcon
+            }, 2000)
+          })
+        })
+      })
+    })
+  </script>
+{% endblock %}

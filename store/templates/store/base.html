@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mayaj - Premium Footwear</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="shortcut icon" href="{{ sitesettings.logo.url }}" type="image/x-icon">
+
+    <!-- tailwind custom configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4F46E5',
+                        'primary-dark': '#4338CA',
+                        secondary: '#10B981',
+                        dark: '#1F2937',
+                        light: '#F9FAFB'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- font awesome cdn -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- custom css -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        /* Scrolling announcement bar styles */
+        .scrolling-announcement {
+            background: #4f46e5;
+            color: white;
+            padding: 8px 0;
+            overflow: hidden;
+            position: relative;
+            width: 100%;
+        }
+
+        .scrolling-text {
+            display: inline-block;
+            white-space: nowrap;
+            padding-left: 100%;
+            animation: scroll 35s linear infinite;
+            font-size: 0.875rem;
+            /* text-sm equivalent */
+        }
+
+        .scrolling-text:hover {
+            animation-play-state: paused;
+            cursor: default;
+        }
+
+        @keyframes scroll {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
+        .bottom-nav {
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    {% block extracss %}{% endblock extracss %}
+
+</head>
+
+<body class="bg-gray-50">
+
+    {% include "store/include/navbar.html" %}
+
+    {% block content %}{% endblock content %}
+
+    {% include "store/include/footer.html" %}
+
+    {% block extrajs %}{% endblock extrajs %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Smooth scrolling for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+        });
+
+        const scrollingText = document.querySelector('.scrolling-text');
+
+        function pauseScroll() {
+            scrollingText.style.animationPlayState = 'paused';
+        }
+
+        function resumeScroll() {
+            scrollingText.style.animationPlayState = 'running';
+        }
+
+        function resetScroll() {
+            scrollingText.style.animation = 'none';
+            void scrollingText.offsetWidth; // Trigger reflow
+            scrollingText.style.animation = 'scroll 35s linear infinite';
+        }
+
+        // Adjust animation speed based on screen size
+        function adjustSpeed() {
+            const speed = window.innerWidth < 768 ? 12 : 35;
+            scrollingText.style.animationDuration = speed + 's';
+        }
+
+        window.addEventListener('resize', adjustSpeed);
+        adjustSpeed(); // Initial call
+    </script>
+</body>
+
+</html>

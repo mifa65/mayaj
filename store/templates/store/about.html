@@ -1,0 +1,105 @@
+{% extends "store/base.html" %}
+
+{% block content %}
+<!-- About Section -->
+<section class="max-w-4xl mx-auto py-12 px-6 text-center">
+    <h2 class="text-3xl font-bold mb-6 text-gray-800">{{ about_section.title }}</h2>
+    <div class="text-gray-700 leading-relaxed text-lg">
+        {{ about_section.content|safe }}
+    </div>
+</section>
+
+<!-- Founders Section -->
+{% if founders %}
+<section class="max-w-6xl mx-auto px-6 py-12">
+    <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Meet Our Founders</h2>
+    <div class="grid md:grid-cols-2 gap-10">
+        {% for member in founders %}
+        <div class="bg-white p-8 rounded-2xl shadow-lg text-center transition-transform duration-300 hover:scale-105">
+            <div class="w-40 h-40 mx-auto mb-6 overflow-hidden rounded-full border-4 border-indigo-100">
+                <img src="{{ member.image.url }}" loading="lazy" alt="{{ member.name }}" class="w-full h-full object-cover">
+            </div>
+            <h3 class="text-2xl font-semibold text-gray-800">{{ member.name }}</h3>
+            <p class="text-indigo-600 font-medium">{{ member.position }}</p>
+            <p class="mt-3 text-gray-600">{{ member.bio }}</p>
+
+            <div class="mt-6 flex justify-center space-x-4">
+                {% if member.facebook_url %}
+                <a href="{{ member.facebook_url }}" class="text-blue-600 hover:text-blue-800 text-xl">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                {% endif %}
+                {% if member.twitter_url %}
+                <a href="{{ member.twitter_url }}" class="text-blue-400 hover:text-blue-600 text-xl">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                {% endif %}
+                {% if member.linkedin_url %}
+                <a href="{{ member.linkedin_url }}" class="text-blue-700 hover:text-blue-900 text-xl">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                {% endif %}
+                {% if member.instagram_url %}
+                <a href="{{ member.instagram_url }}" class="text-pink-600 hover:text-pink-800 text-xl">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                {% endif %}
+                {% if member.email %}
+                <a href="mailto:{{ member.email }}" class="text-gray-600 hover:text-indigo-600 text-xl">
+                    <i class="fas fa-envelope"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Team Section -->
+{% if team_members %}
+<section class="max-w-6xl mx-auto px-6 py-12">
+    <h2 class="text-3xl font-bold text-center mb-12 text-gray-800">Meet Our Team</h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for member in team_members %}
+        <div class="bg-white p-6 rounded-xl shadow-md text-center transition-transform duration-300 hover:scale-105">
+            <div class="w-32 h-32 mx-auto mb-4 overflow-hidden rounded-full border-4 border-indigo-100">
+                <img src="{{ member.image.url }}" loading="lazy" alt="{{ member.name }}" class="w-full h-full object-cover">
+            </div>
+            <h3 class="text-xl font-semibold text-gray-800">{{ member.name }}</h3>
+            <p class="text-indigo-600">{{ member.position }}</p>
+            <p class="mt-2 text-sm text-gray-500">{{ member.bio|truncatewords:15 }}</p>
+
+            <div class="mt-6 flex justify-center space-x-4">
+                {% if member.facebook_url %}
+                <a href="{{ member.facebook_url }}" class="text-blue-600 hover:text-blue-800 text-xl">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                {% endif %}
+                {% if member.twitter_url %}
+                <a href="{{ member.twitter_url }}" class="text-blue-400 hover:text-blue-600 text-xl">
+                    <i class="fab fa-twitter"></i>
+                </a>
+                {% endif %}
+                {% if member.linkedin_url %}
+                <a href="{{ member.linkedin_url }}" class="text-blue-700 hover:text-blue-900 text-xl">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                {% endif %}
+                {% if member.instagram_url %}
+                <a href="{{ member.instagram_url }}" class="text-pink-600 hover:text-pink-800 text-xl">
+                    <i class="fab fa-instagram"></i>
+                </a>
+                {% endif %}
+                {% if member.email %}
+                <a href="mailto:{{ member.email }}" class="text-gray-600 hover:text-indigo-600 text-xl">
+                    <i class="fas fa-envelope"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock content %}

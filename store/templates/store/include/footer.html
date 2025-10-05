@@ -1,0 +1,79 @@
+
+{% load static %}
+<!-- Footer -->
+
+<footer class="bg-gray-800 text-white py-12">
+    <div class="container mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+                <div class="flex items-center">
+                    {% if sitesettings.logo %}
+                    <img src="{{ sitesettings.logo.url }}" loading="lazy" alt="{{ sitesettings.site_name }}" class="w-10 rounded-full">
+                    {% endif %}
+                    <h1 class="md:text-2xl text-sm font-bold text-white">
+                        {% if not sitesettings.logo %}<i class="fas fa-shoe-prints mr-2"></i>{% endif %}
+                        <span class="text-[#1E8834]">{{ sitesettings.site_name }}</span>
+                    </h1>
+                </div>
+                <p class="text-gray-400">{{ sitesettings.footer_description | safe }}
+                </p>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-4">Quick Links</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'home' %}" class="text-gray-400 hover:text-white">Home</a></li>
+                    <li><a href="{% url 'products' %}" class="text-gray-400 hover:text-white">Products</a></li>
+                    <li><a href="{% url 'offers' %}" class="text-gray-400 hover:text-white">Offers</a></li>
+                    <li><a href="{% url 'about' %}" class="text-gray-400 hover:text-white">About Us</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-4">Customer Service</h4>
+                <ul class="space-y-2">
+                    <li><a href="{% url 'contact' %}" class="text-gray-400 hover:text-white">Contact Us</a></li>
+                    <li><a href="{% url 'return' %}" class="text-gray-400 hover:text-white">Returns & Exchanges</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-semibold mb-4">Payment Partners</h4>
+                <div class="flex flex-wrap gap-3">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" loading="lazy" alt="Visa"
+                        class="h-8 bg-white p-1 rounded">
+                    <img src="{% static 'images/Bkash-Logo.webp' %}" loading="lazy"
+                                    alt="bKash" class="h-6 mx-auto mb-1 bg-white rounded h-8 p-2">
+                    <img src="{% static 'images/Nagad-Logo.wine.webp' %}" loading="lazy"
+                                    alt="nagad" class="h-6 mx-auto mb-1 bg-white rounded h-8 p-2">
+                    <img src="{% static 'images/Rocket-Logo.webp' %}" loading="lazy"
+                                    alt="rocket" class="h-6 mx-auto mb-1 bg-white rounded h-8 p-2">
+                    <img src="https://cdn-icons-png.flaticon.com/512/5278/5278605.png" loading="lazy" alt="cod"
+                        class="h-8 bg-white p-1 rounded">
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-gray-700 mt-8 pt-8 md:mb-0 mb-8 text-center text-gray-400 ">
+            <p>&copy; {% now "Y" %} {{ sitesettings.footer_copyright_text }}</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Bottom Navigation Bar (for mobile) -->
+<nav class="bottom-nav md:hidden fixed bottom-0 w-full bg-white z-50">
+    <div class="flex justify-around items-center py-3">
+        <a href="{% url 'home' %}" class="text-center text-gray-600">
+            <i class="fas fa-home text-lg"></i>
+            <p class="text-xs mt-1">Home</p>
+        </a>
+        <a href="{% url 'products' %}" class="text-center text-gray-600">
+            <i class="fas fa-shopping-bag text-lg"></i>
+            <p class="text-xs mt-1">Products</p>
+        </a>
+        <a href="{% url 'offers' %}" class="text-center text-gray-600">
+            <i class="fas fa-tag text-lg"></i>
+            <p class="text-xs mt-1">Offers</p>
+        </a>
+        <a href="{% url 'about' %}" class="text-center text-gray-600">
+            <i class="fa-solid fa-address-card text-lg"></i>
+            <p class="text-xs mt-1">About</p>
+        </a>
+    </div>
+</nav>

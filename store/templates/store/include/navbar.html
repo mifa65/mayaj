@@ -1,0 +1,63 @@
+<!-- Top Announcement Bar with Scrolling Text -->
+<div class="scrolling-announcement">
+  <div class="scrolling-text">
+    <i class="fas fa-truck mr-2"></i>
+    {% if sitesettings.announcement_enabled %}
+      <span class="mx-8">•</span>
+      হোলসেল ক্রয় এর জন্য যোগাযোগ করুন - 01310048272
+      <span class="mx-8">•</span>
+      {{ sitesettings.announcement_text }}
+    {% else %}
+      <span class="mx-8">•</span>
+      হোলসেল ক্রয় এর জন্য যোগাযোগ করুন - 01310048272
+    {% endif %}
+  </div>
+</div>
+
+<!-- Navbar -->
+<nav class="sticky top-0 w-full bg-white shadow-md z-50">
+  <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+    <a href="{% url 'home' %}" class="">
+      <div class="flex items-center">
+        {% if sitesettings.logo %}
+          <img src="{{ sitesettings.logo.url }}" loading="lazy" alt="{{ sitesettings.site_name }}" class="w-10 rounded-full" />
+        {% endif %}
+        <h1 class="md:text-2xl text-sm font-bold text-indigo-600">
+          {% if not sitesettings.logo %}
+            <i class="fas fa-shoe-prints mr-2"></i>
+          {% endif %}
+          <span class="text-[#1E8834]">{{ sitesettings.site_name }}</span>
+        </h1>
+      </div>
+    </a>
+
+    <div class="hidden md:flex space-x-8">
+      <a href="{% url 'home' %}" class="text-gray-600 hover:text-indigo-600 font-medium">Home</a>
+      <a href="{% url 'products' %}" class="text-gray-600 hover:text-indigo-600 font-medium">Products</a>
+      <a href="{% url 'offers' %}" class="text-gray-600 hover:text-indigo-600 font-medium">Offers</a>
+      <a href="{% url 'about' %}" class="text-gray-600 hover:text-indigo-600 font-medium">About</a>
+    </div>
+
+    <div class="flex items-center space-x-6">
+      <form class="md:flex hidden border-2 rounded-md" method="GET" action="{% url 'search' %}">
+        <input type="text" name="q" placeholder="Type to search products.." class="px-4 py-2 rounded-l-lg w-full text-gray-800 focus:outline-none" />
+        <button type="submit" class="px-4 py-2 rounded-r-lg hover:bg-indigo-700 hover:text-white"><i class="fas fa-search text-lg"></i></button>
+      </form>
+      <a href="{% url 'cart_detail' %}" class="text-gray-600 hover:text-indigo-600 relative">
+        <i class="fas fa-shopping-cart text-lg"></i>
+        <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full cart-count">
+          {% with cart=request.session.cart %}
+            {{ cart|length|default:0 }}
+          {% endwith %}
+        </span>
+      </a>
+      <a href="#" class="hidden text-gray-600 hover:text-indigo-600"><i class="fas fa-user text-lg"></i></a>
+    </div>
+  </div>
+  <div class="px-2">
+    <form class="flex md:hidden border-2 rounded-md" method="GET" action="{% url 'search' %}">
+      <input type="text" name="q" placeholder="Type to search products.." class="px-4 py-2 rounded-l-lg w-full text-gray-800 focus:outline-none" />
+      <button type="submit" class="px-4 py-2 rounded-r-lg hover:bg-indigo-700 hover:text-white"><i class="fas fa-search text-lg"></i></button>
+    </form>
+  </div>
+</nav>

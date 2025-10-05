@@ -1,0 +1,378 @@
+{% extends "store/base.html" %}
+{% load static %}
+
+{% block extracss %}
+<style>
+    .cart-item {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .cart-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+
+    .quantity-btn {
+        transition: all 0.2s ease;
+    }
+
+    .quantity-btn:hover {
+        background-color: #4F46E5;
+        color: white;
+    }
+
+    .remove-btn {
+        transition: all 0.2s ease;
+    }
+
+    .remove-btn:hover {
+        color: #EF4444;
+        transform: scale(1.1);
+    }
+
+    .payment-option {
+        transition: all 0.2s ease;
+        border: 2px solid #E5E7EB;
+    }
+
+    .payment-option:hover,
+    .payment-option.selected {
+        border-color: #4F46E5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .promo-btn {
+        transition: all 0.3s ease;
+    }
+
+    .promo-btn:hover {
+        background-color: #3B82F6;
+    }
+
+    .checkout-btn {
+        transition: all 0.3s ease;
+        background: linear-gradient(45deg, #4F46E5, #10B981);
+    }
+
+    .checkout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px -5px rgba(79, 70, 229, 0.4);
+        background: linear-gradient(45deg, #4338CA, #0DA271);
+    }
+
+    .continue-btn {
+        transition: all 0.3s ease;
+    }
+
+    .continue-btn:hover {
+        background-color: #F3F4F6;
+    }
+
+    .empty-cart-icon {
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+            transform: translateY(0);
+        }
+
+        40% {
+            transform: translateY(-20px);
+        }
+
+        60% {
+            transform: translateY(-10px);
+        }
+    }
+</style>
+{% endblock extracss %}
+
+{% block content %}
+<!-- Cart Section -->
+<section class="py-8 bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Your Shopping Cart</h1>
+            <a href="{% url 'products' %}" class="continue-btn text-primary font-semibold flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Continue Shopping
+            </a>
+        </div>
+
+        {% if cart|length > 0 %}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2">
+                {% for item_key, item in cart %}
+                <!-- Cart Item -->
+                <div class="cart-item bg-white rounded-xl shadow-sm p-4 mb-4 flex flex-col sm:flex-row"
+                    data-item-key="{{ item_key }}">
+                    <div class="sm:w-24 w-full h-24 mb-4 sm:mb-0">
+                        <img src="{{ item.product.images.first.image.url }}" loading="lazy" alt="{{ item.product.name }}"
+                            class="w-full h-full object-cover rounded-lg">
+                    </div>
+                    <div class="flex-grow sm:pl-4">
+                        <div class="flex justify-between">
+                            <div>
+                                <h3 class="font-semibold text-lg">{{ item.product.name }}</h3>
+                                {% if item.size %}
+                                <p class="text-gray-600 text-sm">Size: {{ item.size }}</p>
+                                {% endif %}
+                            </div>
+                            <form method="POST"
+                                action="{% if item.size %}{% url 'remove_from_cart_with_size' item.product.id item.size %}{% else %}{% url 'remove_from_cart' item.product.id %}{% endif %}"
+                                class="remove-item-form">
+                                {% csrf_token %}
+                                <button type="submit" class="remove-btn text-gray-400 h-6">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="flex items-center">
+                                <span class="text-gray-600 mr-3">Qty:</span>
+                                <form method="POST"
+                                    action="{% if item.size %}{% url 'update_cart_with_size' item.product.id item.size %}{% else %}{% url 'update_cart' item.product.id %}{% endif %}"
+                                    class="update-quantity-form flex items-center">
+                                    {% csrf_token %}
+                                    <button type="button"
+                                        class="quantity-btn px-2 py-1 text-gray-600 decrease-quantity">
+                                        <i class="fas fa-minus text-xs"></i>
+                                    </button>
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                                        class="w-12 text-center border-t border-b py-1 quantity-input">
+                                    <button type="button"
+                                        class="quantity-btn px-2 py-1 text-gray-600 increase-quantity">
+                                        <i class="fas fa-plus text-xs"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-primary font-bold text-lg">৳ {% widthratio item.price 1 item.quantity %}
+                                </p>
+                                {% if item.product.discount_price %}
+                                {% if item.product.discount_price < item.product.price %} <p
+                                    class="text-gray-400 text-sm line-through">৳ {% widthratio item.product.price 1 item.quantity %}
+                                   
+                                    </p>
+                                    {% endif %}
+                                    {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Promo Code Section -->
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4 md:block hidden">
+                    <h3 class="font-semibold text-lg mb-3">Apply Promo Code</h3>
+                    <div class="flex">
+                        <input type="text" placeholder="Enter promo code"
+                            class="flex-grow px-4 py-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                        <button class="promo-btn bg-primary text-white px-6 py-2 rounded-r-lg font-semibold">
+                            Apply
+                        </button>
+                    </div>
+                    <div class="mt-3">
+                        <p class="text-sm text-gray-600">Available offers:</p>
+                        {% comment %} <ul class="text-sm text-green-600 mt-1">
+                            <li><i class="fas fa-tag mr-2"></i> SUMMER25 - Get 25% off on summer collection</li>
+                            <li><i class="fas fa-tag mr-2"></i> FREESHIP - Free shipping on orders above ৳2000</li>
+                        </ul> {% endcomment %}
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+                    <h3 class="font-semibold text-xl mb-4">Order Summary</h3>
+
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Subtotal ({{ cart|length }} item{{ cart|length|pluralize }})</span>
+                        <span class="font-medium">৳ {{ subtotal|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Discount</span>
+                        <span class="text-green-600 font-medium">-৳ {{ discount|floatformat:2 }}</span>
+                    </div>
+
+                    <div class="flex justify-between mb-2">
+                        <span class="text-gray-600">Shipping</span>
+                        <span class="font-medium">৳ {{ shipping|floatformat:2 }}</span>
+                    </div>
+
+
+                    <div class="border-t pt-4 mt-2 mb-6">
+                        <div class="flex justify-between">
+                            <span class="font-semibold">Total</span>
+                            <span class="font-bold text-lg text-primary">৳ {{ total|floatformat:2 }}</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Inclusive of all taxes</p>
+                    </div>
+
+                    <!-- Delivery Estimate -->
+                    <div class="mb-6 p-3 bg-blue-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-truck text-blue-500 mr-2"></i>
+                            <span class="text-sm font-medium">Estimated Delivery:</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">3-5 business days (Dhaka), 5-7 days (Other cities)</p>
+                    </div>
+
+                    <!-- Payment Options -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-3">Select Payment Method</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="payment-option rounded-lg p-3 text-center cursor-pointer">
+                                <img src="{% static 'images/Bkash-Logo.webp' %}" loading="lazy"
+                                    alt="bKash" class="h-6 mx-auto mb-1">
+                                <span class="text-xs">bKash</span>
+                            </div>
+                            <div class="payment-option rounded-lg p-3 text-center cursor-pointer">
+                                <img src="{% static 'images/Nagad-Logo.wine.webp' %}" loading="lazy" alt="Nagad"
+                                    class="h-6 mx-auto mb-1">
+                                <span class="text-xs">Nagad</span>
+                            </div>
+                            <div class="payment-option rounded-lg p-3 text-center cursor-pointer">
+                                <img src="{% static 'images/Rocket-Logo.webp' %}" loading="lazy" alt="Visa"
+                                    class="h-6 mx-auto mb-1">
+                                <span class="text-xs">Rocket</span>
+                            </div>
+                            <div class="payment-option rounded-lg p-3 text-center cursor-pointer selected">
+                                <i class="fas fa-money-bill-wave text-green-500 text-xl mx-auto mb-1"></i>
+                                <span class="text-xs">Cash on Delivery</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="{% url 'checkout' %}"
+                        class="checkout-btn w-full py-3 rounded-lg text-white font-semibold mb-4 bg-primary hover:bg-primary-dark text-center block">
+                        Proceed to Checkout
+                    </a>
+
+                    <p class="text-xs text-gray-500 text-center">
+                        By completing your purchase you agree to these <a href="{% url 'return' %}" class="text-primary">Terms of
+                            Service</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty Cart State -->
+        <div class="bg-white rounded-xl shadow-sm p-8 text-center">
+            <i class="fas fa-shopping-cart text-4xl text-gray-300 mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-700 mb-2">Your cart is empty</h2>
+            <p class="text-gray-600 mb-6">Looks like you haven't added anything to your cart yet.</p>
+            <a href="{% url 'products' %}"
+                class="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-dark">
+                Start Shopping
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock content %}
+
+{% block extrajs %}
+<script>
+    // Cart quantity management
+    document.addEventListener('DOMContentLoaded', function () {
+        // Quantity buttons
+        document.querySelectorAll('.increase-quantity').forEach(button => {
+            button.addEventListener('click', function () {
+                const form = this.closest('.update-quantity-form');
+                const input = form.querySelector('.quantity-input');
+                input.value = parseInt(input.value) + 1;
+                submitCartForm(form);
+            });
+        });
+
+        document.querySelectorAll('.decrease-quantity').forEach(button => {
+            button.addEventListener('click', function () {
+                const form = this.closest('.update-quantity-form');
+                const input = form.querySelector('.quantity-input');
+                if (parseInt(input.value) > 1) {
+                    input.value = parseInt(input.value) - 1;
+                    submitCartForm(form);
+                }
+            });
+        });
+
+        // Input change
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.addEventListener('change', function () {
+                if (parseInt(this.value) < 1) this.value = 1;
+                const form = this.closest('.update-quantity-form');
+                submitCartForm(form);
+            });
+        });
+
+        // Remove item
+        document.querySelectorAll('.remove-item-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                submitCartForm(this);
+            });
+        });
+
+        // AJAX form submission
+        function submitCartForm(form) {
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update cart count in navbar
+                        document.querySelectorAll('.cart-count').forEach(el => {
+                            el.textContent = data.cart_count;
+                        });
+
+                        // If we're on the cart page, reload to update totals
+                        if (window.location.pathname.includes('/cart/')) {
+                            location.reload();
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Fallback to normal form submission
+                    form.submit();
+                });
+        }
+
+        // Payment option selection
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.addEventListener('click', function () {
+                document.querySelectorAll('.payment-option').forEach(opt => {
+                    opt.classList.remove('selected', 'border-2', 'border-primary');
+                    opt.classList.add('border', 'border-gray-200');
+                });
+                this.classList.add('selected', 'border-2', 'border-primary');
+                this.classList.remove('border', 'border-gray-200');
+            });
+        });
+
+        // Add some basic styling for selected payment option
+        document.querySelectorAll('.payment-option').forEach(option => {
+            option.classList.add('border', 'border-gray-200');
+        });
+        document.querySelector('.payment-option.selected').classList.add('border-2', 'border-primary');
+        document.querySelector('.payment-option.selected').classList.remove('border', 'border-gray-200');
+    });
+</script>
+{% endblock extrajs %}

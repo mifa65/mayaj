@@ -1,0 +1,547 @@
+{% extends "store/base.html" %}
+
+{% block extracss %}
+<style>
+    .pattern-dots {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+        background-size: 20px 20px;
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    .offer-badge {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .offer-icon {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        font-size: 24px;
+        opacity: 0.8;
+    }
+
+    .offer-link {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .offer-link:hover {
+        border-bottom-color: currentColor;
+    }
+
+    .offer-card {
+        transition: all 0.3s ease;
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        height: 100%;
+    }
+
+    .offer-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .offer-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        z-index: 10;
+    }
+
+    .offer-icon {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        font-size: 2.5rem;
+        opacity: 0.15;
+        transition: all 0.3s ease;
+    }
+
+    .offer-card:hover .offer-icon {
+        transform: scale(1.1);
+        opacity: 0.2;
+    }
+
+    .pattern-dots {
+        background-image: radial-gradient(rgba(255, 255, 255, 0.2) 1px, transparent 1px);
+        background-size: 10px 10px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        opacity: 0.3;
+    }
+
+    .countdown-timer {
+        display: flex;
+        gap: 6px;
+    }
+
+    .timer-unit {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: rgba(255, 255, 255, 0.2);
+        padding: 6px;
+        border-radius: 8px;
+        min-width: 40px;
+    }
+
+    .timer-value {
+        font-weight: 700;
+        font-size: 1rem;
+        color: white;
+    }
+
+    .timer-label {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .offer-link {
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .offer-link:hover {
+        transform: translateX(5px);
+    }
+
+    @media (max-width: 768px) {
+        .offer-card {
+            margin-bottom: 1.5rem;
+        }
+
+        .offer-icon {
+            font-size: 2rem;
+        }
+    }
+
+    .combo-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 1px solid #e5e7eb;
+        height: fit-content;
+    }
+
+    .combo-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    .combo-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: linear-gradient(45deg, #3B82F6, #10B981);
+        color: white;
+        font-weight: 600;
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 16px;
+        z-index: 10;
+    }
+
+    .savings-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(45deg, #EF4444, #F59E0B);
+        color: white;
+        font-weight: 700;
+        font-size: 0.75rem;
+        padding: 3px 8px;
+        border-radius: 16px;
+        z-index: 10;
+    }
+
+    .product-indicator {
+        position: absolute;
+        bottom: 12px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        z-index: 10;
+    }
+
+    .indicator-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .indicator-dot.active {
+        background-color: white;
+        transform: scale(1.2);
+    }
+
+    .countdown-timer {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+    }
+
+    .timer-unit {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #F3F4F6;
+        padding: 6px;
+        border-radius: 6px;
+        min-width: 40px;
+    }
+
+    .timer-value {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #1F2937;
+    }
+
+    .timer-label {
+        font-size: 0.65rem;
+        color: #6B7280;
+    }
+
+    .plus-icon {
+        margin: 0 8px;
+        background-color: #E5E7EB;
+        color: #4B5563;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+
+    .combo-price {
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+
+    .original-price {
+        text-decoration: line-through;
+        color: #9CA3AF;
+        font-size: 0.9rem;
+    }
+
+    .combo-image-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .combo-image {
+        transition: transform 0.5s ease;
+    }
+
+    .combo-image:hover {
+        transform: scale(1.05);
+    }
+
+    .view-all-btn {
+        transition: all 0.3s ease;
+        background: linear-gradient(45deg, #3B82F6, #10B981);
+        color: white;
+        font-weight: 600;
+    }
+
+    .view-all-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px -5px rgba(59, 130, 246, 0.4);
+    }
+
+    .progress-bar {
+        height: 5px;
+        background-color: #E5E7EB;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-top: 6px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10B981, #3B82F6);
+        border-radius: 3px;
+    }
+
+    @media (max-width: 768px) {
+        .combo-image-container {
+            height: 45vw;
+        }
+
+        .countdown-timer {
+            gap: 4px;
+        }
+
+        .timer-unit {
+            min-width: 36px;
+            padding: 4px;
+        }
+
+        .timer-value {
+            font-size: 0.9rem;
+        }
+
+        .timer-label {
+            font-size: 0.6rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .combo-image-container {
+            height: 50vw;
+        }
+
+        .combo-badge,
+        .savings-badge {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+        }
+
+        .plus-icon {
+            margin: 0 6px;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+        }
+    }
+</style>
+{% endblock extracss %}
+
+{% block content %}
+<!-- Special Offers Section -->
+<section class="py-16 bg-white" id="offers">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="text-primary font-semibold uppercase tracking-wider text-sm">Limited Time Deals</span>
+            <h2 class="text-4xl font-bold text-gray-900 mb-4 mt-2">Exclusive Special Offers</h2>
+            <p class="text-gray-600">Don't miss out on these limited-time deals and exclusive promotions crafted just
+                for you</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% if active_offers %}
+            {% for offer in active_offers %}
+            <!-- Dynamic Offer Card -->
+            <div
+                class="offer-card bg-gradient-to-br {{ offer.gradient_classes }} text-white p-12 relative overflow-hidden">
+                <div class="pattern-dots"></div>
+                <div class="offer-badge">{{ offer.badge_text }}</div>
+                <div class="offer-icon">
+                    <i class="{{ offer.icon_class }}"></i>
+                </div>
+
+                <h3 class="text-2xl font-bold mb-3 relative z-10">{{ offer.title }}</h3>
+                <p class="mb-6 relative z-10">{{ offer.short_description }}</p>
+
+                {% if offer.offer_type == 'welcome_offer' and offer.discount_code %}
+                <div class="flex items-center text-sm mb-6 relative z-10">
+                    <div class="bg-white/20 px-3 py-1.5 rounded-lg flex items-center">
+                        <span class="mr-2">Use code:</span>
+                        <span class="font-mono font-bold">{{ offer.discount_code }}</span>
+                        <button class="ml-2 text-xs bg-white/30 p-1 rounded copy-code"
+                            data-code="{{ offer.discount_code }}" aria-label="Copy code">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                {% elif offer.offer_type == 'free_shipping' and offer.min_order_amount %}
+                <div class="flex items-center text-sm mb-8 relative z-10">
+                    <div class="flex items-center bg-white/20 px-3 py-1.5 rounded-lg">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span>Minimum order: ৳{{ offer.min_order_amount }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="flex items-center text-sm mb-6 relative z-10">
+                    <i class="fas fa-clock mr-2 opacity-80"></i>
+                    <span>Ends: {{ offer.end_date|date:"M d, Y" }}</span>
+                </div>
+                {% endif %}
+
+                <a href="{% url 'products' %}" class="font-semibold offer-link relative z-10 group">
+                    {% if offer.offer_type == 'welcome_offer' %}Claim Offer
+                    {% else %}Shop Now{% endif %}
+                    <i class="fas fa-arrow-right ml-2 transition-transform group-hover:translate-x-1"></i>
+                </a>
+
+                <div class="absolute bottom-0 left-0 w-full h-1 bg-gradient-to-r from-current to-current opacity-50">
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <!-- Fallback if no offers -->
+            <div class="col-span-3 text-center py-12">
+                <p class="text-gray-500">No special offers available at the moment.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Combo Offer Section -->
+<section class="py-12 bg-gradient-to-b from-gray-50 to-white" id="combo-offers">
+    <div class="container mx-auto px-4 max-w-6xl">
+        <div class="text-center mb-12">
+            <span class="text-secondary font-semibold uppercase tracking-wider text-sm">Limited Time Offers</span>
+            <h2 class="text-3xl font-bold text-gray-900 mb-3 mt-2">Special Combo Deals</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto text-sm">Maximize your savings with our expertly curated
+                bundles. Limited quantities available with exclusive discounts.</p>
+        </div>
+
+        <!-- Combo Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
+            {% if combo_offers %}
+            {% for combo in combo_offers %}
+            <!-- Combo Card -->
+            <div class="combo-card bg-white rounded-xl shadow-md overflow-hidden">
+                <div class="combo-image-container h-60 relative">
+                    <div class="combo-badge">{{ combo.badge_text }}</div>
+                    <div class="savings-badge">{{ combo.savings_badge_text }}</div>
+                    <div class="flex h-full">
+                        {% for combo_product in combo.comboproduct_set.all|slice:":2" %}
+                        <div class="w-1/2 h-full overflow-hidden">
+                            {% with combo_product.product.images.all|first as first_image %}
+                            {% if first_image %}
+                            <img src="{{ first_image.image.url }}" loading="lazy"
+                                alt="{% if first_image.alt_text %}{{ first_image.alt_text }}{% else %}{{ combo_product.product.name }}{% endif %}"
+                                class="combo-image w-full h-full object-cover">
+                            {% else %}
+                            <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+                                <span class="text-gray-500 text-xs">No image</span>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="product-indicator">
+                        {% for i in combo.comboproduct_set.all %}
+                        <span class="indicator-dot {% if forloop.first %}active{% endif %}"></span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="p-5">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg text-gray-900">{{ combo.name }}</h3>
+                    </div>
+
+                    <div class="flex items-center mb-3 flex-wrap gap-2 h-16">
+                        {% for combo_product in combo.comboproduct_set.all|slice:":2" %}
+                        <span class="text-sm font-semibold bg-blue-50 px-2 py-1 rounded-md">
+                            {{ combo_product.product.name }}
+                        </span>
+                        {% if not forloop.last %}
+                        <span class="plus-icon">+</span>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="flex items-center mb-3">
+                        <span class="combo-price text-primary">৳{{ combo.discount_price }}</span>
+                        <span class="original-price ml-2">৳{{ combo.original_price }}</span>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex text-xs text-gray-500 mb-1">
+                            <span>Limited stock: {{ combo.stock_quantity }} left</span>
+                        </div>
+
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="text-gray-500 text-xs mb-2">Offer ends:</p>
+                        <div class="text-sm text-gray-700">
+                            {{ combo.end_date|date:"M d, Y H:i" }}
+                        </div>
+                    </div>
+
+                    <button
+                        class="w-full bg-primary text-white py-2.5 rounded-lg font-semibold hover:bg-primary-dark transition duration-300 flex items-center justify-center text-sm shadow-sm hover:shadow-md">
+                        <i class="fas fa-shopping-cart mr-2 text-xs"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <!-- Fallback if no combo offers -->
+            <div class="col-span-2 text-center py-8">
+                <p class="text-gray-500">No combo offers available at the moment.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+{% block extrajs %}
+<script>
+    // Simple interactivity for demonstration
+    document.addEventListener('DOMContentLoaded', function () {
+        // Simple countdown timer animation
+        const countdowns = document.querySelectorAll('.countdown-timer');
+
+        countdowns.forEach(timer => {
+            const seconds = timer.querySelector('.timer-unit:last-child .timer-value');
+            let count = parseInt(seconds.textContent);
+
+            setInterval(() => {
+                count--;
+                if (count < 0) {
+                    count = 59;
+                    // Update minutes here in a real implementation
+                }
+                seconds.textContent = count.toString().padStart(2, '0');
+            }, 1000);
+        });
+
+        // Copy code functionality
+        document.querySelectorAll('.copy-code').forEach(button => {
+            button.addEventListener('click', function () {
+                const code = this.getAttribute('data-code');
+                navigator.clipboard.writeText(code).then(() => {
+                    const originalIcon = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-check"></i>';
+                    setTimeout(() => {
+                        this.innerHTML = originalIcon;
+                    }, 2000);
+                });
+            });
+        });
+
+    });
+</script>
+{% endblock extrajs %}

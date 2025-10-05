@@ -1,0 +1,129 @@
+{% extends 'store/base.html' %}
+{% load static %}
+
+{% block content %}
+  <section class="max-w-6xl mx-auto px-6 py-12">
+    <h1 class="text-3xl font-bold mb-6">Search Results</h1>
+
+    {% if query %}
+      <p class="text-gray-600 mb-6">
+        Showing results for: "<strong>{{ query }}</strong>" ({{ results_count }} results found)
+      </p>
+    {% endif %}
+
+    {% if products %}
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {% for product in products %}
+          <!-- Product Card -->
+          <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden">
+            <a href="{% url 'product-desc' product.slug %}" class="block">
+              <div class="product-image relative">
+                {% with first_image=product.images.all|first %}
+                  {% if first_image %}
+                    <img src="{{ first_image.image.url }}"
+                      loading="lazy"
+                      alt="{% if first_image.alt_text %}
+                        {{ first_image.alt_text }}
+                      {% else %}
+                        {{ product.name }}
+                      {% endif %}"
+                      class="w-full h-60 object-cover" />
+                  {% else %}
+                    <div class="w-full h-60 bg-gray-200 flex items-center justify-center">
+                      <span class="text-gray-500">No image</span>
+                    </div>
+                  {% endif %}
+                {% endwith %}
+
+                {% if product.discount_price %}
+                  <span class="absolute top-4 right-4 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-semibold">{{ product.get_discount_percentage }}% OFF</span>
+                {% endif %}
+              </div>
+            </a>
+            <div class="p-5">
+              <a href="{% url 'product-desc' product.slug %}">
+                <div class="h-20">
+                  <h3 class="font-semibold text-lg text-gray-900 truncate">{{ product.name }}</h3>
+                  <p class="text-gray-600 text-sm mb-2 truncate">{{ product.short_description }}</p>
+                </div>
+              </a>
+
+              <!-- Sizes Section -->
+              <div class="mb-4">
+                <p class="text-gray-600 text-sm mb-2">Available Sizes:</p>
+                <div class="flex flex-wrap gap-2" id="size-container-{{ product.id }}">
+                  {% for size in product.sizes.all|slice:':4' %}
+                    <span class="size-option text-xs border border-gray-200 rounded-md px-2 py-1 cursor-pointer {% if forloop.first %}selected border-primary{% endif %}" data-product-id="{{ product.id }}" data-size="{{ size.size }}">{{ size.size }}</span>
+                  {% empty %}
+                    <span class="text-gray-400 text-xs">No sizes available</span>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Price and Add to Cart -->
+              <div class="flex justify-between items-center">
+                <div>
+                  {% if product.discount_price %}
+                    <span class="text-primary font-bold text-lg">৳ {{ product.discount_price }}</span>
+                    <span class="text-gray-400 text-sm line-through ml-2">৳ {{ product.price }}</span>
+                  {% else %}
+                    <span class="text-primary font-bold text-lg">৳ {{ product.price }}</span>
+                  {% endif %}
+                </div>
+                <div class="">
+                  <form method="POST" action="{% url 'add_to_cart' product.id %}" class="flex-1" id="addToCartForm-{{ product.id }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="size" id="formSize-{{ product.id }}" value="{% firstof product.sizes.all.0.size '' %}" />
+                    <input type="hidden" name="quantity" id="formQuantity-{{ product.id }}" value="1" />
+                    <button type="submit" class="add-to-cart bg-primary text-white p-3 rounded-full hover:bg-primary-dark transition duration-300"><i class="fas fa-shopping-cart"></i></button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      {% if query %}
+        <div class="text-center py-12">
+          <i class="fas fa-search text-4xl text-gray-300 mb-4"></i>
+          <p class="text-gray-600">No products found for "{{ query }}". Try different keywords.</p>
+        </div>
+      {% else %}
+        <div class="text-center py-12">
+          <i class="fas fa-search text-4xl text-gray-300 mb-4"></i>
+          <p class="text-gray-600">Enter a search term to find products.</p>
+        </div>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block extrajs %}
+  <script>
+    // Simple interactivity for demonstration
+    document.addEventListener('DOMContentLoaded', function () {
+      // Size selection
+        const sizeOptions = document.querySelectorAll('.size-option');
+        sizeOptions.forEach(option => {
+            option.addEventListener('click', function () {
+                const productId = this.getAttribute('data-product-id');
+                const size = this.getAttribute('data-size');
+                
+                // Remove selected class from siblings
+                const container = document.getElementById(`size-container-${productId}`);
+                const siblings = container.querySelectorAll('.size-option');
+                siblings.forEach(sib => {
+                    sib.classList.remove('selected', 'border-primary');
+                });
+                
+                // Add selected class to clicked element
+                this.classList.add('selected', 'border-primary');
+                
+                // Update the hidden form field
+                document.getElementById(`formSize-${productId}`).value = size;
+            });
+        });      
+    })
+  </script>
+{% endblock extrajs %}

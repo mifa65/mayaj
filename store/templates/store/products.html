@@ -1,0 +1,246 @@
+{% extends 'store/base.html' %}
+
+{% block extracss %}
+  <style>
+    /* all product section css designs */
+    .product-card {
+      transition: all 0.3s ease;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .product-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .product-image {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .product-image img {
+      transition: transform 0.5s ease;
+    }
+    
+    .product-card:hover .product-image img {
+      transform: scale(1.05);
+    }
+    
+    .quick-view {
+      position: absolute;
+      bottom: -50px;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 12px;
+      text-align: center;
+      transition: bottom 0.3s ease;
+    }
+    
+    .product-card:hover .quick-view {
+      bottom: 0;
+    }
+    
+    .size-option {
+      transition: all 0.2s ease;
+    }
+    
+    .size-option:hover {
+      background-color: #4f46e5;
+      color: white;
+      border-color: #4f46e5;
+    }
+    
+    .size-option.selected {
+      background-color: #4f46e5;
+      color: white;
+      border-color: #4f46e5;
+    }
+    
+    .add-to-cart {
+      transition: all 0.3s ease;
+    }
+    
+    .add-to-cart:hover {
+      transform: scale(1.05);
+    }
+    
+    .filter-option {
+      transition: all 0.2s ease;
+    }
+    
+    .filter-option:hover,
+    .filter-option.active {
+      background-color: #4f46e5;
+      color: white;
+    }
+    
+    .rating-stars {
+      display: inline-flex;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <!-- Products Section -->
+  <section class="py-16 bg-gradient-to-b from-white to-gray-50" id="products">
+    <div class="container mx-auto px-4 max-w-7xl">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-bold text-gray-900 mb-4">Featured Collection</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto md:block hidden">Discover our premium selection of footwear designed for comfort, style, and performance.</p>
+      </div>
+
+      <!-- Product Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        {% if page_obj %}
+          {% for product in page_obj %}
+            <!-- Product Card -->
+            <div class="product-card bg-white rounded-xl shadow-lg overflow-hidden">
+              <a href="{% url 'product-desc' product.slug %}">
+                <div class="product-image relative">
+                  {% with first_image=product.images.all|first %}
+                    {% if first_image %}
+                      <img src="{{ first_image.image.url }}" loading="lazy" alt="{{ first_image.alt_text|default:product.name }}" class="w-full h-60 object-cover" />
+                    {% else %}
+                      <div class="w-full h-60 bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-500">No image</span>
+                      </div>
+                    {% endif %}
+                  {% endwith %}
+
+                  {% if product.discount_price %}
+                    <span class="absolute top-4 right-4 bg-red-500 text-white text-xs px-3 py-1 rounded-full font-semibold">{{ product.get_discount_percentage }}% OFF</span>
+                  {% endif %}
+                </div>
+              </a>
+              <div class="p-5">
+                <a href="{% url 'product-desc' product.slug %}">
+                  <div class="h-20">
+                    <h3 class="font-semibold text-lg text-gray-900 truncate">{{ product.name }}</h3>
+                    <p class="text-gray-600 text-sm mb-2 truncate">{{ product.short_description }}</p>
+                  </div>
+                </a>
+
+                <!-- Sizes Section -->
+                <div class="mb-4">
+                  <p class="text-gray-600 text-sm mb-2">Available Sizes:</p>
+                  <div class="flex flex-wrap gap-2" id="size-container-{{ product.id }}">
+                    {% for size in product.sizes.all|slice:':4' %}
+                      <span class="size-option text-xs border border-gray-200 rounded-md px-2 py-1 cursor-pointer {% if forloop.first %}selected border-primary{% endif %}" data-product-id="{{ product.id }}" data-size="{{ size.size }}">{{ size.size }}</span>
+                    {% empty %}
+                      <span class="text-gray-400 text-xs">No sizes available</span>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                <!-- Price -->
+                <div class="flex justify-between items-center">
+                  <div>
+                    {% if product.discount_price %}
+                      <span class="text-primary font-bold text-lg">৳ {{ product.discount_price }}</span>
+                      <span class="text-gray-400 text-sm line-through ml-2">৳ {{ product.price }}</span>
+                    {% else %}
+                      <span class="text-primary font-bold text-lg">৳ {{ product.price }}</span>
+                    {% endif %}
+                  </div>
+
+                  <div class="">
+                    <form method="POST" action="{% url 'add_to_cart' product.id %}" class="flex-1" id="addToCartForm-{{ product.id }}">
+                      {% csrf_token %}
+                      <input type="hidden" name="size" id="formSize-{{ product.id }}" value="{% firstof product.sizes.all.0.size '' %}" />
+                      <input type="hidden" name="quantity" id="formQuantity-{{ product.id }}" value="1" />
+                      <button type="submit" class="add-to-cart bg-primary text-white p-3 rounded-full hover:bg-primary-dark transition duration-300"><i class="fas fa-shopping-cart"></i></button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-span-4 text-center py-12">
+            <p class="text-gray-500">No products available at the moment.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    <!-- Pagination -->
+    <div class="my-6 flex justify-center">
+      <div class="flex items-center space-x-2">
+        <!-- Previous -->
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" class="pagination-btn p-2 rounded-lg border border-gray-300 hover:bg-indigo-600 hover:text-white"><i class="fas fa-chevron-left"></i></a>
+        {% else %}
+          <button class="pagination-btn disabled p-2 rounded-lg border border-gray-300 text-gray-400"><i class="fas fa-chevron-left"></i></button>
+        {% endif %}
+
+        <!-- Page Numbers with Ellipses -->
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <button class="pagination-btn bg-indigo-600 text-white p-2 px-4 rounded-lg">{{ num }}</button>
+          {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+            <a href="?page={{ num }}" class="pagination-btn p-2 px-4 rounded-lg border border-gray-300 hover:bg-indigo-600 hover:text-white">{{ num }}</a>
+          {% elif num == 1 or num == page_obj.paginator.num_pages %}
+            <a href="?page={{ num }}" class="pagination-btn p-2 px-4 rounded-lg border border-gray-300 hover:bg-indigo-600 hover:text-white">{{ num }}</a>
+          {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+            <span class="px-2 text-gray-600">...</span>
+          {% endif %}
+        {% endfor %}
+
+        <!-- Next -->
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="pagination-btn p-2 rounded-lg border border-gray-300 hover:bg-indigo-600 hover:text-white"><i class="fas fa-chevron-right"></i></a>
+        {% else %}
+          <button class="pagination-btn disabled p-2 rounded-lg border border-gray-300 text-gray-400"><i class="fas fa-chevron-right"></i></button>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock %}
+
+{% block extrajs %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Size selection
+      const sizeOptions = document.querySelectorAll('.size-option')
+      sizeOptions.forEach((option) => {
+        option.addEventListener('click', function () {
+          const productId = this.getAttribute('data-product-id')
+          const size = this.getAttribute('data-size')
+    
+          // Remove selected class from siblings
+          const container = document.getElementById(`size-container-${productId}`)
+          const siblings = container.querySelectorAll('.size-option')
+          siblings.forEach((sib) => {
+            sib.classList.remove('selected', 'border-primary')
+          })
+    
+          // Add selected class to clicked element
+          this.classList.add('selected', 'border-primary')
+    
+          // Update the hidden form field
+          document.getElementById(`formSize-${productId}`).value = size
+        })
+      })
+    
+      // Filter buttons
+      const filterButtons = document.querySelectorAll('.filter-option')
+      filterButtons.forEach((button) => {
+        button.addEventListener('click', function () {
+          filterButtons.forEach((btn) => btn.classList.remove('active'))
+          this.classList.add('active')
+        })
+      })
+    
+      // Wishlist toggle
+      const wishlistButtons = document.querySelectorAll('.fa-heart')
+      wishlistButtons.forEach((button) => {
+        button.addEventListener('click', function () {
+          this.classList.toggle('far')
+          this.classList.toggle('fas')
+          this.classList.toggle('text-red-500')
+        })
+      })
+    })
+  </script>
+{% endblock %}

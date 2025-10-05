@@ -1,0 +1,574 @@
+{% extends 'store/base.html' %} {% load static %} {% block extracss %}
+  <style>
+    .payment-option,
+    .delivery-option {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .payment-option:not(.opacity-50):hover,
+    .delivery-option:not(.opacity-50):hover {
+      border-color: #4f46e5;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .selected-option {
+      border-color: #4f46e5;
+      background-color: #f0f4ff;
+    }
+    
+    input[type='radio'] {
+      accent-color: #4f46e5;
+    }
+    
+    /* Form styling */
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #4f46e5;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    /* Scrollbar styling for order items */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c5c5c5;
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    /* Hide transaction ID field by default */
+    #transaction-id-container,
+    #sender-mobile-container {
+      display: none;
+    }
+    
+    /* Error styling */
+    .error {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    
+    .error-input {
+      border-color: #ef4444 !important;
+    }
+  </style>
+{% endblock %} {% block content %}
+  <!-- Checkout Section -->
+  <section class="py-8 bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
+        <a href="{% url 'cart_detail' %}" class="text-primary font-semibold flex items-center"><i class="fas fa-arrow-left mr-2"></i> Back to Cart</a>
+      </div>
+
+      {% if messages %}
+        <div class="mb-6">
+          {% for message in messages %}
+            <div class="p-4 rounded-lg {% if message.tags == 'error' %}
+                
+                 bg-red-100 text-red-700
+
+              {% else %}
+                
+                 bg-blue-100 text-blue-700
+
+              {% endif %}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Order Summary -->
+        <div class="lg:col-span-1 order-2 lg:order-1">
+          <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
+            <h3 class="font-semibold text-xl mb-4">Order Summary</h3>
+
+            <!-- Cart Items -->
+            <div class="mb-4 max-h-64 overflow-y-auto">
+              {% for item_key, item in cart %}
+                <div class="flex items-center py-3 border-b">
+                  <img src="{{ item.product.images.first.image.url|default:'https://via.placeholder.com/80' }}" loading="lazy" alt="{{ item.product.name }}" class="w-12 h-12 object-cover rounded-lg mr-3" />
+                  <div class="flex-grow">
+                    <h4 class="font-medium text-sm">{{ item.product.name }}</h4>
+                    {% if item.size %}
+                      <p class="text-gray-600 text-xs">Size: {{ item.size }}</p>
+                    {% endif %}
+                    <p class="text-gray-600 text-xs">Qty: {{ item.quantity }}</p>
+                  </div>
+                  <span class="font-medium text-sm">৳ {{ item.price|floatformat:2 }}</span>
+                </div>
+              {% empty %}
+                <p class="text-gray-500 text-center py-4">Your cart is empty</p>
+              {% endfor %}
+            </div>
+
+            <div class="space-y-2 mb-4">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Subtotal</span>
+                <span class="font-medium">৳ {{ subtotal|floatformat:2 }}</span>
+              </div>
+              {% if discount > 0 %}
+                <div class="flex justify-between">
+                  <span class="text-gray-600">Discount</span>
+                  <span class="text-green-600 font-medium">-৳ {{ discount|floatformat:2 }}</span>
+                </div>
+              {% endif %}
+              <div id="shipping-cost" class="flex justify-between">
+                <span class="text-gray-600">Shipping</span>
+                <span class="font-medium">
+                  ৳
+                  <span id="shipping-amount">{{ shipping|floatformat:2 }}</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="border-t pt-4 mb-6">
+              <div class="flex justify-between items-center">
+                <span class="font-semibold text-lg">Total</span>
+                <span id="total-amount" class="font-bold text-xl text-primary">
+                  ৳
+                  <span id="total-amount-value">{{ total|floatformat:2 }}</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Delivery Info -->
+            <div class="mb-6 p-3 bg-blue-50 rounded-lg">
+              <div class="flex items-center mb-2">
+                <i class="fas fa-truck text-blue-500 mr-2"></i>
+                <span class="text-sm font-medium">Delivery Estimate</span>
+              </div>
+              <p id="delivery-estimate" class="text-sm text-gray-600">3-5 business days (Inside Dhaka)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div class="lg:col-span-2 order-1 lg:order-2">
+          <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+            <h3 class="font-semibold text-xl mb-6">Shipping Information</h3>
+
+            <form method="POST" id="checkoutForm">
+              {% csrf_token %} {% if form.non_field_errors %}
+                <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              <!-- Change this section in your checkout.html -->
+              <div>
+                <label for="{{ form.shipping_full_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                <input type="text" id="{{ form.shipping_full_name.id_for_label }}" name="{{ form.shipping_full_name.name }}" value="{{ form.shipping_full_name.value|default:'' }}" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                {% if form.shipping_full_name.errors %}
+                  <div class="error">{{ form.shipping_full_name.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-6">
+                <label for="{{ form.shipping_email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                <input type="email" id="{{ form.shipping_email.id_for_label }}" name="{{ form.shipping_email.name }}" value="{{ form.shipping_email.value|default:'' }}" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                {% if form.shipping_email.errors %}
+                  <div class="error">{{ form.shipping_email.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-6">
+                <label for="{{ form.shipping_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Phone Number *</label>
+                <input type="tel" id="{{ form.shipping_phone.id_for_label }}" name="{{ form.shipping_phone.name }}" value="{{ form.shipping_phone.value|default:'' }}" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                {% if form.shipping_phone.errors %}
+                  <div class="error">{{ form.shipping_phone.errors }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Delivery Options -->
+              <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-4">Delivery Area *</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="delivery-option rounded-lg p-4 border-2 border-gray-300 transition-colors duration-300 selected-option" data-area="inside" data-cost="60" data-days="3-5" data-location="Inside Dhaka">
+                    <div class="flex items-center">
+                      <input type="radio" id="inside-dhaka" name="delivery_area" value="inside" class="mr-3" checked />
+                      <div>
+                        <label for="inside-dhaka" class="font-medium cursor-pointer">Inside Dhaka</label>
+                        <p class="text-sm text-gray-600 mt-1">৳ 60 | 3-5 Working days</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="delivery-option rounded-lg p-4 border-2 border-gray-300 transition-colors duration-300" data-area="outside" data-cost="120" data-days="5-7" data-location="Outside Dhaka">
+                    <div class="flex items-center">
+                      <input type="radio" id="outside-dhaka" name="delivery_area" value="outside" class="mr-3" />
+                      <div>
+                        <label for="outside-dhaka" class="font-medium cursor-pointer">Outside Dhaka</label>
+                        <p class="text-sm text-gray-600 mt-1">৳ 120 | 5-7 Working days</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-6">
+                <label for="{{ form.shipping_address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Shipping Address *</label>
+                <textarea id="{{ form.shipping_address.id_for_label }}" name="{{ form.shipping_address.name }}" rows="3" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Full street address, apartment/suite number, etc.">{{ form.shipping_address.value|default:'' }}</textarea>
+                {% if form.shipping_address.errors %}
+                  <div class="error">{{ form.shipping_address.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div>
+                  <label for="{{ form.shipping_city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">City *</label>
+                  <input type="text" id="{{ form.shipping_city.id_for_label }}" name="{{ form.shipping_city.name }}" value="{{ form.shipping_city.value|default:'' }}" required class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                  {% if form.shipping_city.errors %}
+                    <div class="error">{{ form.shipping_city.errors }}</div>
+                  {% endif %}
+                </div>
+                <div>
+                  <label for="{{ form.shipping_state.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">State/Division</label>
+                  <input type="text" id="{{ form.shipping_state.id_for_label }}" name="{{ form.shipping_state.name }}" value="{{ form.shipping_state.value|default:'' }}" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                  {% if form.shipping_state.errors %}
+                    <div class="error">{{ form.shipping_state.errors }}</div>
+                  {% endif %}
+                </div>
+                <div>
+                  <label for="{{ form.shipping_zip_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">ZIP Code</label>
+                  <input type="text" id="{{ form.shipping_zip_code.id_for_label }}" name="{{ form.shipping_zip_code.name }}" value="{{ form.shipping_zip_code.value|default:'' }}" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" />
+                  {% if form.shipping_zip_code.errors %}
+                    <div class="error">{{ form.shipping_zip_code.errors }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <h3 class="font-semibold text-xl mb-6 mt-8">Payment Method</h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <!-- Cash on Delivery Option -->
+                <div class="payment-option rounded-lg p-4 border-2 border-gray-300 transition-colors duration-300 selected-option" data-method="cash_on_delivery">
+                  <div class="flex items-center">
+                    <input type="radio" id="cash_on_delivery" name="payment_method" value="cash_on_delivery" class="mr-3" checked />
+                    <div class="flex items-center">
+                      <i class="fas fa-money-bill-wave text-green-500 text-2xl mr-3"></i>
+                      <div>
+                        <label for="cash_on_delivery" class="font-medium cursor-pointer">Cash on Delivery</label>
+                        <p class="text-xs text-gray-600 mt-1">Pay when you receive</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- bKash Option -->
+                <div class="payment-option rounded-lg p-4 border-2 border-gray-300 transition-colors duration-300" data-method="bkash">
+                  <div class="flex items-center">
+                    <input type="radio" id="bkash" name="payment_method" value="bkash" class="mr-3" />
+                    <div class="flex items-center">
+                      <div class="mr-3">
+                        <img src="{% static 'images/Bkash-Logo.webp' %}" loading="lazy" alt="bKash" class="h-6 mx-auto mb-1" />
+                      </div>
+                      <div>
+                        <label for="bkash" class="font-medium cursor-pointer">bKash</label>
+                        <p class="text-xs text-gray-600 mt-1">Send money to: 01310048272</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Nagad Option -->
+                <div class="payment-option rounded-lg p-4 border-2 border-gray-300 transition-colors duration-300" data-method="nagad">
+                  <div class="flex items-center">
+                    <input type="radio" id="nagad" name="payment_method" value="nagad" class="mr-3" />
+                    <div class="flex items-center">
+                      <div class="mr-3">
+                        <img src="{% static 'images/Nagad-Logo.wine.webp' %}" loading="lazy" alt="Nagad" class="h-6 mx-auto mb-1" />
+                      </div>
+                      <div>
+                        <label for="nagad" class="font-medium cursor-pointer">Nagad</label>
+                        <p class="text-xs text-gray-600 mt-1">Send money to: 01310048272</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Rocket Option -->
+                <div class="payment-option rounded-lg p-4 border-2 border-gray-300 transition-colors duration-300" data-method="rocket">
+                  <div class="flex items-center">
+                    <input type="radio" id="rocket" name="payment_method" value="rocket" class="mr-3" />
+                    <div class="flex items-center">
+                      <div class="mr-3">
+                        <img src="{% static 'images/Rocket-Logo.webp' %}" loading="lazy" alt="Visa" class="h-6 mx-auto mb-1" />
+                      </div>
+                      <div>
+                        <label for="rocket" class="font-medium cursor-pointer">Rocket</label>
+                        <p class="text-xs text-gray-600 mt-1">Send money to: 01850235934</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Transaction ID Field (Hidden by default) -->
+              <div id="transaction-id-container" class="mb-6">
+                <label for="{{ form.transaction_id.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Transaction ID *</label>
+                <input type="text" id="{{ form.transaction_id.id_for_label }}" name="{{ form.transaction_id.name }}" value="{{ form.transaction_id.value|default:'' }}" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter your transaction ID" />
+                <p class="text-xs text-gray-500 mt-1">Please provide the transaction ID from your mobile banking payment.</p>
+                {% if form.transaction_id.errors %}
+                  <div class="error">{{ form.transaction_id.errors }}</div>
+                {% endif %}
+              </div>
+
+              <!-- Sender Mobile Number Field (Hidden by default) -->
+              <div id="sender-mobile-container" class="mb-6">
+                <label for="{{ form.sender_mobile_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Sender's Mobile Number *</label>
+                <input type="text" id="{{ form.sender_mobile_number.id_for_label }}" name="{{ form.sender_mobile_number.name }}" value="{{ form.sender_mobile_number.value|default:'' }}" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Enter sender's mobile number" />
+                <p class="text-xs text-gray-500 mt-1">Mobile number used for the payment.</p>
+                {% if form.sender_mobile_number.errors %}
+                  <div class="error">{{ form.sender_mobile_number.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-6">
+                <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">Order Notes (Optional)</label>
+                <textarea id="{{ form.notes.id_for_label }}" name="{{ form.notes.name }}" rows="3" class="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Special instructions for delivery">{{ form.notes.value|default:'' }}</textarea>
+                {% if form.notes.errors %}
+                  <div class="error">{{ form.notes.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="mb-6">
+                <label class="flex items-start">
+                  <input type="checkbox" name="terms" required class="mr-2 mt-1" />
+                  <span class="text-sm text-gray-700">
+                    I agree to the
+                    <a href="{% url 'return' %}" class="text-primary hover:underline">Return Policy and Services</a>
+                    *
+                  </span>
+                </label>
+              </div>
+
+              <button type="submit" class="w-full bg-primary text-white py-4 rounded-lg font-semibold text-lg hover:bg-primary-dark transition duration-300">Place Order</button>
+            </form>
+          </div>
+
+          <!-- Security Badges -->
+          <div class="bg-white rounded-xl shadow-sm p-6 text-center">
+            <h4 class="font-semibold mb-4">Secure Checkout</h4>
+            <div class="flex justify-center items-center space-x-6">
+              <div class="text-center">
+                <i class="fas fa-lock text-green-500 text-2xl mb-2"></i>
+                <p class="text-xs text-gray-600">SSL Secure</p>
+              </div>
+              <div class="text-center">
+                <i class="fas fa-shield-alt text-blue-500 text-2xl mb-2"></i>
+                <p class="text-xs text-gray-600">Data Protected</p>
+              </div>
+              <div class="text-center">
+                <i class="fas fa-user-shield text-purple-500 text-2xl mb-2"></i>
+                <p class="text-xs text-gray-600">Privacy First</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+{% endblock %}
+{% block extrajs %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initial values from Django template - NO TAX
+      const subtotal = parseFloat('{{ subtotal }}') || 0
+      const discount = parseFloat('{{ discount }}') || 0
+      let shippingCost = parseFloat('{{ shipping }}') || 0
+    
+      // Update totals based on delivery area
+      function updateTotals() {
+        const selectedArea = document.querySelector('input[name="delivery_area"]:checked')
+        if (selectedArea) {
+          const option = selectedArea.closest('.delivery-option')
+          shippingCost = parseFloat(option.dataset.cost) || 0
+    
+          // Update shipping cost display
+          document.getElementById('shipping-amount').textContent = shippingCost.toFixed(2)
+    
+          // Update total - WITHOUT TAX
+          const total = subtotal - discount + shippingCost
+          document.getElementById('total-amount-value').textContent = total.toFixed(2)
+    
+          // Update delivery estimate
+          const location = option.dataset.location
+          const days = option.dataset.days
+          document.getElementById('delivery-estimate').textContent = `${days} business days (${location})`
+        }
+      }
+    
+      // Style selected delivery option
+      function styleSelectedDeliveryOption() {
+        document.querySelectorAll('.delivery-option').forEach((option) => {
+          option.classList.remove('selected-option')
+        })
+    
+        const selectedOption = document.querySelector('input[name="delivery_area"]:checked')
+        if (selectedOption) {
+          selectedOption.closest('.delivery-option').classList.add('selected-option')
+        }
+      }
+    
+      // Style selected payment option
+      function styleSelectedPaymentOption() {
+        document.querySelectorAll('.payment-option').forEach((option) => {
+          option.classList.remove('selected-option')
+        })
+    
+        const selectedOption = document.querySelector('input[name="payment_method"]:checked')
+        if (selectedOption) {
+          selectedOption.closest('.payment-option').classList.add('selected-option')
+    
+          // Show/hide transaction ID and sender mobile fields based on payment method
+          const transactionIdContainer = document.getElementById('transaction-id-container')
+          const senderMobileContainer = document.getElementById('sender-mobile-container')
+          const transactionIdField = document.getElementById('{{ form.transaction_id.id_for_label }}')
+          const senderMobileField = document.getElementById('{{ form.sender_mobile_number.id_for_label }}')
+    
+          if (selectedOption.value === 'cash_on_delivery') {
+            transactionIdContainer.style.display = 'none'
+            senderMobileContainer.style.display = 'none'
+            transactionIdField.removeAttribute('required')
+            senderMobileField.removeAttribute('required')
+          } else {
+            transactionIdContainer.style.display = 'block'
+            senderMobileContainer.style.display = 'block'
+            transactionIdField.setAttribute('required', 'required')
+            senderMobileField.setAttribute('required', 'required')
+          }
+        }
+      }
+    
+      // Initialize styles and set default selections
+      function initializeSelections() {
+        // Set default radio buttons if not already set
+        if (!document.querySelector('input[name="delivery_area"]:checked')) {
+          document.querySelector('input[name="delivery_area"][value="inside"]').checked = true
+        }
+    
+        if (!document.querySelector('input[name="payment_method"]:checked')) {
+          document.querySelector('input[name="payment_method"][value="cash_on_delivery"]').checked = true
+        }
+    
+        styleSelectedDeliveryOption()
+        styleSelectedPaymentOption()
+        updateTotals()
+      }
+    
+      // Initialize everything
+      initializeSelections()
+    
+      // Add event listeners for delivery options
+      document.querySelectorAll('input[name="delivery_area"]').forEach((radio) => {
+        radio.addEventListener('change', function () {
+          styleSelectedDeliveryOption()
+          updateTotals()
+        })
+      })
+    
+      // Add event listeners for payment options
+      document.querySelectorAll('input[name="payment_method"]').forEach((radio) => {
+        radio.addEventListener('change', styleSelectedPaymentOption)
+      })
+    
+      // Add click handlers for option containers (for better UX)
+      document.querySelectorAll('.delivery-option').forEach((option) => {
+        option.addEventListener('click', function (e) {
+          // Don't trigger if clicking on the radio button itself
+          if (e.target.type !== 'radio') {
+            const radio = this.querySelector('input[type="radio"]')
+            radio.checked = true
+            radio.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+        })
+      })
+    
+      document.querySelectorAll('.payment-option').forEach((option) => {
+        option.addEventListener('click', function (e) {
+          // Don't trigger if clicking on the radio button itself
+          if (e.target.type !== 'radio') {
+            const radio = this.querySelector('input[type="radio"]')
+            radio.checked = true
+            radio.dispatchEvent(new Event('change', { bubbles: true }))
+          }
+        })
+      })
+    
+      // Form validation
+      const form = document.getElementById('checkoutForm')
+      form.addEventListener('submit', function (e) {
+        let isValid = true
+        const requiredFields = form.querySelectorAll('[required]')
+    
+        requiredFields.forEach((field) => {
+          if (!field.value.trim()) {
+            isValid = false
+            field.classList.add('error-input')
+          } else {
+            field.classList.remove('error-input')
+          }
+        })
+    
+        // Additional validation for transaction ID and sender mobile if needed for mobile payments
+        const selectedPayment = document.querySelector('input[name="payment_method"]:checked')
+        if (selectedPayment && selectedPayment.value !== 'cash_on_delivery') {
+          const transactionId = document.getElementById('{{ form.transaction_id.id_for_label }}').value.trim()
+          const senderMobile = document.getElementById('{{ form.sender_mobile_number.id_for_label }}').value.trim()
+    
+          if (!transactionId) {
+            isValid = false
+            document.getElementById('{{ form.transaction_id.id_for_label }}').classList.add('error-input')
+          }
+          if (!senderMobile) {
+            isValid = false
+            document.getElementById('{{ form.sender_mobile_number.id_for_label }}').classList.add('error-input')
+          }
+        }
+    
+        if (!isValid) {
+          e.preventDefault()
+          alert('Please fill in all required fields.')
+        }
+      })
+    
+      // Remove error styling when user starts typing
+      const inputs = form.querySelectorAll('input, textarea')
+      inputs.forEach((input) => {
+        input.addEventListener('input', function () {
+          this.classList.remove('error-input')
+        })
+      })
+    
+      // Phone number validation
+      const phoneInput = document.getElementById('{{ form.shipping_phone.id_for_label }}')
+      phoneInput.addEventListener('blur', function () {
+        const phoneRegex = /^[0-9+]{11,15}$/
+        if (!phoneRegex.test(this.value)) {
+          this.classList.add('error-input')
+        }
+      })
+    
+      // Email validation
+      const emailInput = document.getElementById('{{ form.shipping_email.id_for_label }}')
+      emailInput.addEventListener('blur', function () {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(this.value)) {
+          this.classList.add('error-input')
+        }
+      })
+    })
+  </script>
+{% endblock %}
